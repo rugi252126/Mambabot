@@ -29,10 +29,10 @@ My study includes but not limited to the following.
    - Loss function
    - Model/Architecure
    - Optimization Method
-5. CNN (Convolutional Neural Networks)
-6. Training and testing
-7. Saving and Loading the Models
-8. Spotting Underfitting and Overfitting
+6. CNN (Convolutional Neural Networks)
+7. Training and testing
+8. Saving and Loading the Models
+9. Spotting Underfitting and Overfitting
    
    
 Deep learning is indeed a huge topic and for that reason, the following consideration will be taken into account.
