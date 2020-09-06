@@ -19,9 +19,9 @@ As I have knowledge and experience on the other part of the system, to make this
 My study includes but not limited to the following.
 1. Libraries and Packages
 2. Parameterized Learning (Data, Scoring Function, Loss Function, Weights and Biases)
-3.1 Optimization Methods
+3.1. Optimization Methods
    - Gradient Descent(Standard vanilla implementation, SGD(Stochastic Gradient Descent)
-3.2 Regularization
+3.2. Regularization
    - Different type of regularization techniques
 4. Tuning-in the hyperparameters(e.g. learning rate, Weights(W))
 5. NN (Neutral Network)/ ANN (Artificial Neutral Network)
