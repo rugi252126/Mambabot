@@ -45,9 +45,10 @@
 #ifdef __ICCARM__
 	#include <stdint.h>
 	extern uint32_t SystemCoreClock;
+#else
+    extern uint32_t SystemCoreClock; // added here
 #endif
 
-extern uint32_t SystemCoreClock; // added here
 
 #define configUSE_PREEMPTION			1 // set this to 0 will not do context switching and can do collaborative scheduling thru task yielding.
 #define configUSE_IDLE_HOOK				0 // was 1
@@ -128,8 +129,10 @@ standard names. */
 #define xPortPendSVHandler PendSV_Handler
 #define xPortSysTickHandler SysTick_Handler
 
+
+
 // SEGGER Integration - include the SEGGER system view include
-#include "SEGGER_SYSVIEW_FreeRTOS.h"
+//#include "SEGGER_SYSVIEW_FreeRTOS.h"
 
 #endif /* FREERTOS_CONFIG_H */
 

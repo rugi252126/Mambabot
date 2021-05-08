@@ -31,6 +31,7 @@
 /* Scheduler includes. */
 #include "FreeRTOS.h"
 #include "task.h"
+#include "stm32f4xx_hal.h" // alfonsor -> added here for freeRTOS integration
 
 #ifndef __VFP_FP__
     #error This port can only be used when the project options are configured to enable hardware floating point support.
@@ -498,19 +499,15 @@ void xPortSysTickHandler( void )
      * save and then restore the interrupt mask value as its value is already
      * known. */
     portDISABLE_INTERRUPTS();
-    traceISR_ENTER(); // SEGGER Integration
+
+    HAL_IncTick(); // alfonsor -> added here for freeRTOS integration
     {
         /* Increment the RTOS tick. */
         if( xTaskIncrementTick() != pdFALSE )
         {
-        	traceISR_EXIT_TO_SCHEDULER(); // SEGGER Integration
             /* A context switch is required.  Context switching is performed in
              * the PendSV interrupt.  Pend the PendSV interrupt. */
             portNVIC_INT_CTRL_REG = portNVIC_PENDSVSET_BIT;
-        }
-        else
-        {
-        	traceISR_EXIT(); // SEGGER Integration
         }
     }
     portENABLE_INTERRUPTS();
