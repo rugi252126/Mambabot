@@ -1,9 +1,9 @@
 /**
   ******************************************************************************
-  * @file      startup_stm32.s dedicated to STM32F446RETx device
+  * @file      startup_stm32.s dedicated to STM32F429ZITx device
   * @author    Ac6
   * @version   V1.0.0
-  * @date      2020-03-13
+  * @date      2021-03-17
   ******************************************************************************
   */
 
@@ -103,7 +103,7 @@ Infinite_Loop:
   .size Default_Handler, .-Default_Handler
 /******************************************************************************
 *
-* The STM32F446RETx vector table.  Note that the proper constructs
+* The STM32F429ZITx vector table.  Note that the proper constructs
 * must be placed on this to ensure that it ends up at physical address
 * 0x0000.0000.
 *
@@ -148,7 +148,7 @@ g_pfnVectors:
   .word	DMA1_Stream4_IRQHandler      			/* DMA1 Stream4 global interrupt                                      */
   .word	DMA1_Stream5_IRQHandler      			/* DMA1 Stream5 global interrupt                                      */
   .word	DMA1_Stream6_IRQHandler      			/* DMA1 Stream6 global interrupt                                      */
-  .word	ADC_IRQHandler               			/* ADC1 global interrupt                                              */
+  .word	ADC_IRQHandler               			/* ADC2 global interrupts                                             */
   .word	CAN1_TX_IRQHandler           			/* CAN1 TX interrupts                                                 */
   .word	CAN1_RX0_IRQHandler          			/* CAN1 RX0 interrupts                                                */
   .word	CAN1_RX1_IRQHandler          			/* CAN1 RX1 interrupts                                                */
@@ -191,8 +191,8 @@ g_pfnVectors:
   .word	DMA2_Stream2_IRQHandler      			/* DMA2 Stream2 global interrupt                                      */
   .word	DMA2_Stream3_IRQHandler      			/* DMA2 Stream3 global interrupt                                      */
   .word	DMA2_Stream4_IRQHandler      			/* DMA2 Stream4 global interrupt                                      */
-  .word	0                            			/* Reserved                                                           */
-  .word	0                            			/* Reserved                                                           */
+  .word	ETH_IRQHandler               			/* Ethernet global interrupt                                          */
+  .word	ETH_WKUP_IRQHandler          			/* Ethernet Wakeup through EXTI line interrupt                        */
   .word	CAN2_TX_IRQHandler           			/* CAN2 TX interrupts                                                 */
   .word	CAN2_RX0_IRQHandler          			/* CAN2 RX0 interrupts                                                */
   .word	CAN2_RX1_IRQHandler          			/* CAN2 RX1 interrupts                                                */
@@ -204,29 +204,23 @@ g_pfnVectors:
   .word	USART6_IRQHandler            			/* USART6 global interrupt                                            */
   .word	I2C3_EV_IRQHandler           			/* I2C3 event interrupt                                               */
   .word	I2C3_ER_IRQHandler           			/* I2C3 error interrupt                                               */
-  .word	OTG_HS_EP1_OUT_IRQHandler    			/* USB On The Go HS End Point 1 Out                                   */
-  .word	OTG_HS_EP1_IN_IRQHandler     			/* USB On The Go HS End Point 1 In                                    */
-  .word	OTG_HS_WKUP_IRQHandler       			/* USB On The Go HS Wakeup                                            */
+  .word	OTG_HS_EP1_OUT_IRQHandler    			/* USB On The Go HS End Point 1 Out global interrupt                  */
+  .word	OTG_HS_EP1_IN_IRQHandler     			/* USB On The Go HS End Point 1 In global interrupt                   */
+  .word	OTG_HS_WKUP_IRQHandler       			/* USB On The Go HS Wakeup through EXTI interrupt                     */
   .word	OTG_HS_IRQHandler            			/* USB On The Go HS global interrupt                                  */
   .word	DCMI_IRQHandler              			/* DCMI global interrupt                                              */
-  .word	0                            			/* Reserved                                                           */
-  .word	0                            			/* Reserved                                                           */
-  .word	FPU_IRQHandler               			/* Floating point unit interrupt                                      */
-  .word	0                            			/* Reserved                                                           */
-  .word	0                            			/* Reserved                                                           */
+  .word	CRYP_IRQHandler              			/* CRYP crypto global interrupt                                       */
+  .word	HASH_RNG_IRQHandler          			/* Hash and Rng global interrupt                                      */
+  .word	FPU_IRQHandler               			/* Floating point interrupt                                           */
+  .word	UART7_IRQHandler             			/* UART 7 global interrupt                                            */
+  .word	UART8_IRQHandler             			/* UART 8 global interrupt                                            */
   .word	SPI4_IRQHandler              			/* SPI 4 global interrupt                                             */
-  .word	0                            			/* Reserved                                                           */
-  .word	0                            			/* Reserved                                                           */
+  .word	SPI5_IRQHandler              			/* SPI 5 global interrupt                                             */
+  .word	SPI6_IRQHandler              			/* SPI 6 global interrupt                                             */
   .word	SAI1_IRQHandler              			/* SAI1 global interrupt                                              */
-  .word	0                            			/* Reserved                                                           */
-  .word	0                            			/* Reserved                                                           */
-  .word	0                            			/* Reserved                                                           */
-  .word	SAI2_IRQHandler              			/* SAI2 global interrupt                                              */
-  .word	QuadSPI_IRQHandler           			/* QuadSPI global interrupt                                           */
-  .word	HDMI_CEC_IRQHandler          			/* HDMI-CEC global interrupt                                          */
-  .word	SPDIF_Rx_IRQHandler          			/* SPDIF-Rx global interrupt                                          */
-  .word	FMPI2C1_IRQHandler           			/* FMPI2C1 event interrupt                                            */
-  .word	FMPI2C1_error_IRQHandler     			/* FMPI2C1 error interrupt                                            */
+  .word	LCD_TFT_IRQHandler           			/* LTDC global interrupt                                              */
+  .word	LCD_TFT_1_IRQHandler         			/* LTDC global error interrupt                                        */
+  .word	DMA2D_IRQHandler             			/* DMA2D global interrupt                                             */
 
 /*******************************************************************************
 *
@@ -446,6 +440,12 @@ g_pfnVectors:
 	.weak	DMA2_Stream4_IRQHandler
 	.thumb_set DMA2_Stream4_IRQHandler,Default_Handler
 	
+	.weak	ETH_IRQHandler
+	.thumb_set ETH_IRQHandler,Default_Handler
+	
+	.weak	ETH_WKUP_IRQHandler
+	.thumb_set ETH_WKUP_IRQHandler,Default_Handler
+	
 	.weak	CAN2_TX_IRQHandler
 	.thumb_set CAN2_TX_IRQHandler,Default_Handler
 	
@@ -494,32 +494,41 @@ g_pfnVectors:
 	.weak	DCMI_IRQHandler
 	.thumb_set DCMI_IRQHandler,Default_Handler
 	
+	.weak	CRYP_IRQHandler
+	.thumb_set CRYP_IRQHandler,Default_Handler
+	
+	.weak	HASH_RNG_IRQHandler
+	.thumb_set HASH_RNG_IRQHandler,Default_Handler
+	
 	.weak	FPU_IRQHandler
 	.thumb_set FPU_IRQHandler,Default_Handler
+	
+	.weak	UART7_IRQHandler
+	.thumb_set UART7_IRQHandler,Default_Handler
+	
+	.weak	UART8_IRQHandler
+	.thumb_set UART8_IRQHandler,Default_Handler
 	
 	.weak	SPI4_IRQHandler
 	.thumb_set SPI4_IRQHandler,Default_Handler
 	
+	.weak	SPI5_IRQHandler
+	.thumb_set SPI5_IRQHandler,Default_Handler
+	
+	.weak	SPI6_IRQHandler
+	.thumb_set SPI6_IRQHandler,Default_Handler
+	
 	.weak	SAI1_IRQHandler
 	.thumb_set SAI1_IRQHandler,Default_Handler
 	
-	.weak	SAI2_IRQHandler
-	.thumb_set SAI2_IRQHandler,Default_Handler
+	.weak	LCD_TFT_IRQHandler
+	.thumb_set LCD_TFT_IRQHandler,Default_Handler
 	
-	.weak	QuadSPI_IRQHandler
-	.thumb_set QuadSPI_IRQHandler,Default_Handler
+	.weak	LCD_TFT_1_IRQHandler
+	.thumb_set LCD_TFT_1_IRQHandler,Default_Handler
 	
-	.weak	HDMI_CEC_IRQHandler
-	.thumb_set HDMI_CEC_IRQHandler,Default_Handler
-	
-	.weak	SPDIF_Rx_IRQHandler
-	.thumb_set SPDIF_Rx_IRQHandler,Default_Handler
-	
-	.weak	FMPI2C1_IRQHandler
-	.thumb_set FMPI2C1_IRQHandler,Default_Handler
-	
-	.weak	FMPI2C1_error_IRQHandler
-	.thumb_set FMPI2C1_error_IRQHandler,Default_Handler
+	.weak	DMA2D_IRQHandler
+	.thumb_set DMA2D_IRQHandler,Default_Handler
 	
 	.weak	SystemInit
 
