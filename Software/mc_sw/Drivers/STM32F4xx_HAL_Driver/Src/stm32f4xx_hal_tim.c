@@ -264,6 +264,7 @@ HAL_StatusTypeDef HAL_TIM_Base_DeInit(TIM_HandleTypeDef *htim)
   return HAL_OK;
 }
 
+#if 0 // removed by alfonsor
 /**
   * @brief  Initializes the TIM Base MSP.
   * @param  htim pointer to a TIM_HandleTypeDef structure that contains
@@ -278,6 +279,7 @@ __weak void HAL_TIM_Base_MspInit(TIM_HandleTypeDef *htim)
             the HAL_TIM_Base_MspInit could be implemented in the user file
    */
 }
+#endif
 
 /**
   * @brief  DeInitializes TIM Base MSP.
