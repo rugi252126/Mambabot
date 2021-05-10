@@ -50,8 +50,8 @@
 //UART_HandleTypeDef huart2;
 UART_HandleTypeDef huart3;
 static uint8_t test=0;
-static uint32_t en_cnt_data=0;
-static uint32_t mot_dir=0;
+//static uint32_t en_cnt_data=0;
+//static uint32_t mot_dir=0;
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
 
@@ -126,9 +126,9 @@ int main(void)
 	  }
 
 	  ros_ifF_Loop();
-	  en_cnt_data = timer_ifF_getEncoderCount();
-	  mot_dir = timer_ifF_getMotorDirection();
-	  ros_ifF_setEncoderData_Debug(en_cnt_data, mot_dir);
+	  //en_cnt_data = timer_ifF_getEncoderCount();
+	  //mot_dir = timer_ifF_getMotorDirection();
+	  //ros_ifF_setEncoderData_Debug(en_cnt_data, mot_dir);
   }
   /* USER CODE END 3 */
 
