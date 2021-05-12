@@ -10,6 +10,7 @@
 /* Project includes. */
 #include "stm32f4xx_hal.h"
 #include "project.h"
+#include "timer_if.h"
 #include "encoder.h"
 
 /***** Macros */
@@ -38,74 +39,74 @@ struct counts_st
 
 struct encoder_st
 {
-    uint32_t         rpm[ENCODER_NUM_ID_E];
+    uint32_t         rpm[MOTOR_NUM_ID_K];
     struct time_st   time_s;
-    struct counts_st counts_s[ENCODER_NUM_ID_E];
+    struct counts_st counts_s[MOTOR_NUM_ID_K];
 };
 
 static struct encoder_st  encoder_s;
 
 
 /***** Local function prototypes */
-static void encoderLF_processEncoderCounts(enum encoder_id_et enc_id_e, uint32_t dir);
+static void encoderLF_processEncoderCounts(uint8_t mot_id, uint32_t dir);
 
 /***** Local functions */
 
 /** Function to process the read encoder counts from the timer before application
     can use it. Counts overflow will be taken care too.
 
-    @param  enc_id_e  {[see enum encoder_id_et] encoder ID}
-            dir       {[0..1] encoder count direction. 0=up-count; 1=down-count }
+    @param  mot_id   {[0..MOTOR_NUM_ID_K] corresponding motor encoder ID}
+            dir      {[0..1] encoder count direction. 0=up-count; 1=down-count }
     @return none
  */
-static void encoderLF_processEncoderCounts(enum encoder_id_et enc_id_e, uint32_t dir)
+static void encoderLF_processEncoderCounts(uint8_t mot_id, uint32_t dir)
 {
     uint32_t tmp_cnt = 0u;
 
     if(1u == dir)
     { /* Counting down */
         /* check for overflow */
-        if(encoder_s.counts_s[enc_id_e].previous_cnt < encoder_s.counts_s[enc_id_e].current_cnt)
+        if(encoder_s.counts_s[mot_id].previous_cnt < encoder_s.counts_s[mot_id].current_cnt)
         {
             /* overflow occurred. do the correction */
-            tmp_cnt = (MAX_ENCODER_COUNT_K - encoder_s.counts_s[enc_id_e].current_cnt) + encoder_s.counts_s[enc_id_e].previous_cnt;
-            encoder_s.counts_s[enc_id_e].delta_cnt = tmp_cnt;
+            tmp_cnt = (MAX_ENCODER_COUNT_K - encoder_s.counts_s[mot_id].current_cnt) + encoder_s.counts_s[mot_id].previous_cnt;
+            encoder_s.counts_s[mot_id].delta_cnt = tmp_cnt;
         }
         else
         {
-            encoder_s.counts_s[enc_id_e].delta_cnt = encoder_s.counts_s[enc_id_e].previous_cnt - encoder_s.counts_s[enc_id_e].current_cnt;
+            encoder_s.counts_s[mot_id].delta_cnt = encoder_s.counts_s[mot_id].previous_cnt - encoder_s.counts_s[mot_id].current_cnt;
         }
 
         /* save a copy of current encoder count */
-        encoder_s.counts_s[enc_id_e].previous_cnt = encoder_s.counts_s[enc_id_e].current_cnt;
+        encoder_s.counts_s[mot_id].previous_cnt = encoder_s.counts_s[mot_id].current_cnt;
 
         /* register the counts over the period of time */
-        encoder_s.counts_s[enc_id_e].overtime_cnt -= encoder_s.counts_s[enc_id_e].delta_cnt;
+        encoder_s.counts_s[mot_id].overtime_cnt -= encoder_s.counts_s[mot_id].delta_cnt;
     }
     else
     { /* Counting up */
         /* check for overflow */
-        if(encoder_s.counts_s[enc_id_e].previous_cnt > encoder_s.counts_s[enc_id_e].current_cnt)
+        if(encoder_s.counts_s[mot_id].previous_cnt > encoder_s.counts_s[mot_id].current_cnt)
         {
             /* overflow occurred. do the correction */
-            tmp_cnt = (MAX_ENCODER_COUNT_K - encoder_s.counts_s[enc_id_e].previous_cnt) + encoder_s.counts_s[enc_id_e].current_cnt;
-            encoder_s.counts_s[enc_id_e].delta_cnt = tmp_cnt;
+            tmp_cnt = (MAX_ENCODER_COUNT_K - encoder_s.counts_s[mot_id].previous_cnt) + encoder_s.counts_s[mot_id].current_cnt;
+            encoder_s.counts_s[mot_id].delta_cnt = tmp_cnt;
         }
         else
         {
-            encoder_s.counts_s[enc_id_e].delta_cnt = encoder_s.counts_s[enc_id_e].current_cnt - encoder_s.counts_s[enc_id_e].previous_cnt;
+            encoder_s.counts_s[mot_id].delta_cnt = encoder_s.counts_s[mot_id].current_cnt - encoder_s.counts_s[mot_id].previous_cnt;
         }
 
         /* save a copy of current encoder count */
-        encoder_s.counts_s[enc_id_e].previous_cnt = encoder_s.counts_s[enc_id_e].current_cnt;
+        encoder_s.counts_s[mot_id].previous_cnt = encoder_s.counts_s[mot_id].current_cnt;
 
         /* register the counts over the period of time */
-        encoder_s.counts_s[enc_id_e].overtime_cnt += encoder_s.counts_s[enc_id_e].delta_cnt;
+        encoder_s.counts_s[mot_id].overtime_cnt += encoder_s.counts_s[mot_id].delta_cnt;
     }
 }
 
 
-/***** Global functions*/
+/***** Global functions */
 
 /** Module initialization
 
@@ -123,10 +124,10 @@ void encoderF_Init(void)
     RPM is calculated based on encoder information and with respect
     to elapsed time.
 
-    @param  enc_id_e   {[see enum encoder_id_et] encoder ID}
+    @param mot_id   {[0..MOTOR_NUM_ID_K] corresponding motor encoder ID}
     @return motor RPM
  */
-int32_t encoderF_getRPM(enum encoder_id_et enc_id_e)
+int32_t encoderF_getRPM(uint8_t mot_id)
 {
     /* get the elapsed time */
     uint32_t dT = encoder_s.time_s.current_time - encoder_s.time_s.previous_time;
@@ -138,19 +139,19 @@ int32_t encoderF_getRPM(enum encoder_id_et enc_id_e)
     encoder_s.time_s.previous_time = encoder_s.time_s.current_time;
 
     // calculate wheel's speed (in RPM) and return the value
-    return (((double)encoder_s.counts_s[enc_id_e].delta_cnt / (int32_t)MOTOR_ENCODER_COUNTS_PER_REVOLUTION_K) / dtm);
+    return (((double)encoder_s.counts_s[mot_id].delta_cnt / (int32_t)MOTOR_ENCODER_COUNTS_PER_REVOLUTION_K) / dtm);
 }
 
 /** Function to return the registered encoder count over the period of time.
     The information is useful for debugging and monitoring of encoder behavior
     as in-line with motor movements.
 
-    @param  enc_id_e   {[see enum encoder_id_et] encoder ID}
+    @param  param mot_id   {[0..MOTOR_NUM_ID_K] corresponding motor encoder ID}
     @return encoder counts
  */
-int32_t encoderF_getEncoderCountsOvertime(enum encoder_id_et enc_id_e)
+int32_t encoderF_getEncoderCountsOvertime(uint8_t mot_id)
 {
-    return (encoder_s.counts_s[enc_id_e].overtime_cnt);
+    return (encoder_s.counts_s[mot_id].overtime_cnt);
 }
 
 /** Function reads the encoder counts and direction from the timer interface module
@@ -178,10 +179,10 @@ void encoderF_ReadCounts_Callback(void)
     encoder_s.time_s.current_time = encoder_s.time_s.xMs_time_ctr * COUNT_TO_MILLISECONDS_K;
 
     /* Read the current encoder counts and direction */
-    for(idx=0u; idx < (uint8_t)ENCODER_NUM_ID_E; idx++)
+    for(idx=0u; idx < (uint8_t)MOTOR_NUM_ID_K; idx++)
     {
-        encoder_s.counts_s[idx].current_cnt = timer_ifF_getEncoderCount((enum encoder_id_et)idx);
-        cnt_dir = timer_ifF_getEncoderCountDirection((enum encoder_id_et)idx);
+        encoder_s.counts_s[idx].current_cnt = timer_ifF_getEncoderCount(idx);
+        cnt_dir = timer_ifF_getEncoderCountDirection(idx);
 
         /* encoder plausibility check */
         if(    (MAX_ENCODER_COUNT_K == encoder_s.counts_s[idx].current_cnt )
@@ -194,7 +195,7 @@ void encoderF_ReadCounts_Callback(void)
         }
         else
         {
-            encoderLF_processEncoderCounts((enum encoder_id_et)idx, cnt_dir);
+            encoderLF_processEncoderCounts(idx, cnt_dir);
         }
 
     }
