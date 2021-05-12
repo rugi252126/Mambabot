@@ -8,8 +8,6 @@
 #ifndef ENCODER_INC_ENCODER_H_
 #define ENCODER_INC_ENCODER_H_
 
-#include "timer_if.h"
-
 /** Module initialization
 
     @param  none
@@ -23,19 +21,19 @@ void encoderF_Init(void);
     RPM is calculated based on encoder information and with respect
     to elapsed time.
 
-    @param enc_id_e   {[see enum encoder_id_et] encoder ID}
+    @param mot_id   {[0..MOTOR_NUM_ID_K] corresponding motor encoder ID}
     @return motor RPM
  */
-int32_t encoderF_getRPM(enum encoder_id_et enc_id_e);
+int32_t encoderF_getRPM(uint8_t mot_id);
 
 /** Function to return the registered encoder count over the period of time.
     The information is useful for debugging and monitoring of encoder behavior
     as in-line with motor movements.
 
-    @param  enc_id_e   {[see enum encoder_id_et] encoder ID}
+    @param  param mot_id   {[0..MOTOR_NUM_ID_K] corresponding motor encoder ID}
     @return encoder counts
  */
-int32_t encoderF_getEncoderCountsOvertime(enum encoder_id_et enc_id_e);
+int32_t encoderF_getEncoderCountsOvertime(uint8_t mot_id);
 
 /** Function reads the encoder counts and direction from the timer interface module
     The function will be called in every timer interrupt.

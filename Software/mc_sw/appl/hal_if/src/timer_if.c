@@ -6,13 +6,22 @@
  */
 
 #include "stm32f4xx_hal.h"
+#include "project.h"
 #include "timer_if.h"
 #include "encoder.h"
+//#include "motor.h"
+#include "math.h"
 
 /* Private typedef -----------------------------------------------------------*/
+#define TIM_PWM_ID_1_K                            MOTOR_ID_1_K /* for Motor1 Pwm Control     */
+#define TIM_PWM_ID_2_K                            MOTOR_ID_2_K /* for Motor2 Pwm Control     */
+#define TIM_PWM_ID_3_K                            MOTOR_ID_3_K /* for Motor3 Pwm Control     */
+#define TIM_PWM_ID_4_K                            MOTOR_ID_4_K /* for Motor4 Pwm Control     */
+#define TIM_PWM_ID_5_K                            (uint8_t)(4) /* for Head-light Pwm Control */
+
 /* Timer for Motor PWM Control */
-#define TIMx_MOTOR_CTRL                          TIM1
-#define TIMx_MOTOR_CTRL_CLK_ENABLE()             __HAL_RCC_TIM1_CLK_ENABLE()
+#define TIMx_MOTOR_CTRL                           TIM1
+#define TIMx_MOTOR_CTRL_CLK_ENABLE()              __HAL_RCC_TIM1_CLK_ENABLE()
 
 /* Definition for TIMx_MOTOR_CTRL Channel Pins */
 #define TIMx_MOTOR_CTRL_GPIO_PORT_CHANNEL1        GPIOE
@@ -70,7 +79,7 @@
 #define FREE_RUNNING_PERIOD_VALUE                (uint32_t)(1000 - 1)    /* Period Value            */
 
 /* Timer handler declaration */
-TIM_HandleTypeDef    TimHandle;
+TIM_HandleTypeDef    TimMotorHandle;
 TIM_HandleTypeDef    TimFreeRunningHandle;
 TIM_HandleTypeDef    Encoder1_Handle;
 TIM_HandleTypeDef    Encoder2_Handle;
@@ -78,7 +87,7 @@ TIM_HandleTypeDef    Encoder3_Handle;
 TIM_HandleTypeDef    Encoder4_Handle;
 
 /* Timer Output Compare Configuration Structure declaration */
-TIM_OC_InitTypeDef sConfig;
+TIM_OC_InitTypeDef sMotorConfig;
 
 /* Timer Encoder Configuration Structure declaration */
 TIM_Encoder_InitTypeDef sEncoder1Config;
@@ -86,14 +95,19 @@ TIM_Encoder_InitTypeDef sEncoder2Config;
 TIM_Encoder_InitTypeDef sEncoder3Config;
 TIM_Encoder_InitTypeDef sEncoder4Config;
 
-static uint32_t encoder_counter = 0u;
-
+/***** Local function prototypes */
 static void timer_ifLF_InitFreeRunningTimer(void);
 static void timer_ifLF_InitPwm(void);
 static void timer_ifLF_InitEncoder(void);
 static void timer_ifLF_ErrorHandler(void);
 
+/***** Local functions */
 
+/** Initialization of free running timer
+
+    @param  none
+    @return none
+ */
 static void timer_ifLF_InitFreeRunningTimer(void)
 {
     /* Counter Prescaler value */
@@ -131,6 +145,11 @@ static void timer_ifLF_InitFreeRunningTimer(void)
     }
 }
 
+/** Initialization of timer used for Pwm generation
+
+    @param  none
+    @return none
+ */
 static void timer_ifLF_InitPwm(void)
 {
     /* Counter Prescaler value */
@@ -156,15 +175,15 @@ static void timer_ifLF_InitPwm(void)
 	       + ClockDivision = 0
 	       + Counter direction = Up
 	*/
-    TimHandle.Instance = TIMx_MOTOR_CTRL;
+    TimMotorHandle.Instance = TIMx_MOTOR_CTRL;
 
-    TimHandle.Init.Prescaler         = tmp_prescalerValue;
-    TimHandle.Init.Period            = PERIOD_VALUE;
-    TimHandle.Init.ClockDivision     = 0;
-    TimHandle.Init.CounterMode       = TIM_COUNTERMODE_UP;
-    TimHandle.Init.RepetitionCounter = 0;
-    //TimHandle.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
-    if (HAL_TIM_PWM_Init(&TimHandle) != HAL_OK)
+    TimMotorHandle.Init.Prescaler         = tmp_prescalerValue;
+    TimMotorHandle.Init.Period            = PERIOD_VALUE;
+    TimMotorHandle.Init.ClockDivision     = 0;
+    TimMotorHandle.Init.CounterMode       = TIM_COUNTERMODE_UP;
+    TimMotorHandle.Init.RepetitionCounter = 0;
+    //TimMotorHandle.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+    if (HAL_TIM_PWM_Init(&TimMotorHandle) != HAL_OK)
     {
         /* Initialization Error */
         timer_ifLF_ErrorHandler();
@@ -172,27 +191,31 @@ static void timer_ifLF_InitPwm(void)
 
     /*##-2- Configure the PWM channels #########################################*/
     /* Common configuration for all channels */
-    sConfig.OCMode       = TIM_OCMODE_PWM1;
-    sConfig.OCPolarity   = TIM_OCPOLARITY_HIGH;
-    sConfig.OCFastMode   = TIM_OCFAST_DISABLE;
-    sConfig.OCNPolarity  = TIM_OCNPOLARITY_HIGH;
-    sConfig.OCNIdleState = TIM_OCNIDLESTATE_RESET;
+    sMotorConfig.OCMode       = TIM_OCMODE_PWM1;
+    sMotorConfig.OCPolarity   = TIM_OCPOLARITY_HIGH;
+    sMotorConfig.OCFastMode   = TIM_OCFAST_DISABLE;
+    sMotorConfig.OCNPolarity  = TIM_OCNPOLARITY_HIGH;
+    sMotorConfig.OCNIdleState = TIM_OCNIDLESTATE_RESET;
 
-    sConfig.OCIdleState  = TIM_OCIDLESTATE_RESET;
+    sMotorConfig.OCIdleState  = TIM_OCIDLESTATE_RESET;
 
-    timer_ifF_ConfigPwmChannel(TIM_PWM_ID_1_E);
-    timer_ifF_ConfigPwmChannel(TIM_PWM_ID_2_E);
-    timer_ifF_ConfigPwmChannel(TIM_PWM_ID_3_E);
-    timer_ifF_ConfigPwmChannel(TIM_PWM_ID_4_E);
+    timer_ifF_ConfigPwmChannel(TIM_PWM_ID_1_K);
+    timer_ifF_ConfigPwmChannel(TIM_PWM_ID_2_K);
+    timer_ifF_ConfigPwmChannel(TIM_PWM_ID_3_K);
+    timer_ifF_ConfigPwmChannel(TIM_PWM_ID_4_K);
 
     /*##-3- Start PWM signals generation #######################################*/
-    timer_ifF_StartPwm(TIM_PWM_ID_1_E);
-    timer_ifF_StartPwm(TIM_PWM_ID_2_E);
-    timer_ifF_StartPwm(TIM_PWM_ID_3_E);
-    timer_ifF_StartPwm(TIM_PWM_ID_4_E);
+    timer_ifF_StartPwm(TIM_PWM_ID_1_K);
+    timer_ifF_StartPwm(TIM_PWM_ID_2_K);
+    timer_ifF_StartPwm(TIM_PWM_ID_3_K);
+    timer_ifF_StartPwm(TIM_PWM_ID_4_K);
 }
 
+/** Initialization of timers used for encoder reading
 
+    @param  none
+    @return none
+ */
 static void timer_ifLF_InitEncoder(void)
 {
     /* -1- Initialize TIMx_MOTOR1_ENCODER to handle the encoder sensor */
@@ -330,19 +353,34 @@ static void timer_ifLF_InitEncoder(void)
         /* Initialization Error */
     	timer_ifLF_ErrorHandler();
     }
-    /* Start the encoder interface */
+
+    /* Start the encoder interface timers */
     HAL_TIM_Encoder_Start(&Encoder1_Handle, TIM_CHANNEL_ALL);
     HAL_TIM_Encoder_Start(&Encoder2_Handle, TIM_CHANNEL_ALL);
     HAL_TIM_Encoder_Start(&Encoder3_Handle, TIM_CHANNEL_ALL);
     HAL_TIM_Encoder_Start(&Encoder4_Handle, TIM_CHANNEL_ALL);
 }
 
+/** Error handler function
+
+    @param  none
+    @return none
+ */
 static void timer_ifLF_ErrorHandler(void)
 {
 	// TODO: Save the cause of error
     while(1);
 }
 
+/***** Global functions */
+
+/** Module initialization
+
+    @param  none
+    @return none
+
+    It will be called once every POR.
+ */
 void timer_ifF_Init(void)
 {
     timer_ifLF_InitPwm();
@@ -350,6 +388,346 @@ void timer_ifF_Init(void)
     timer_ifLF_InitEncoder();
 
     timer_ifLF_InitFreeRunningTimer();
+}
+
+/** Function interface to configure pwm channels
+
+    @param  idx      {[0..n] pwm channel Id}
+    @return none
+ */
+void timer_ifF_ConfigPwmChannel(uint8_t idx)
+{
+    switch(idx)
+    {
+        case TIM_PWM_ID_1_K:
+        {
+            /* Set the duty cycle for channel 1 */
+            sMotorConfig.Pulse = 0u;
+            if (HAL_TIM_PWM_ConfigChannel(&TimMotorHandle, &sMotorConfig, TIM_CHANNEL_1) != HAL_OK)
+            {
+                /* Configuration Error */
+                timer_ifLF_ErrorHandler();
+            }
+            break;
+        }
+
+        case TIM_PWM_ID_2_K:
+        {
+            /* Set the duty cycle for channel 2 */
+            sMotorConfig.Pulse = 0u;
+            if (HAL_TIM_PWM_ConfigChannel(&TimMotorHandle, &sMotorConfig, TIM_CHANNEL_2) != HAL_OK)
+            {
+                /* Configuration Error */
+                timer_ifLF_ErrorHandler();
+            }
+            break;
+        }
+
+        case TIM_PWM_ID_3_K:
+        {
+            /* Set the duty cycle for channel 3 */
+            sMotorConfig.Pulse = 0u;
+            if (HAL_TIM_PWM_ConfigChannel(&TimMotorHandle, &sMotorConfig, TIM_CHANNEL_3) != HAL_OK)
+            {
+                /* Configuration Error */
+                timer_ifLF_ErrorHandler();
+            }
+            break;
+        }
+
+        case TIM_PWM_ID_4_K:
+        {
+            /* Set the duty cycle for channel 4 */
+            sMotorConfig.Pulse = 0u;
+            if (HAL_TIM_PWM_ConfigChannel(&TimMotorHandle, &sMotorConfig, TIM_CHANNEL_4) != HAL_OK)
+            {
+                /* Configuration Error */
+                timer_ifLF_ErrorHandler();
+            }
+            break;
+        }
+
+        default:
+            /* no action */
+            break;
+    }
+}
+
+/** Function interface to start pwm generation
+
+    @param  idx      {[0..n] pwm channel Id}
+    @return none
+ */
+void timer_ifF_StartPwm(uint8_t idx)
+{
+    switch(idx)
+    {
+        case TIM_PWM_ID_1_K:
+        {
+            /* Start PWM signals generation for channel 1 */
+            if (HAL_TIM_PWM_Start(&TimMotorHandle, TIM_CHANNEL_1) != HAL_OK)
+            {
+                /* Configuration Error */
+                timer_ifLF_ErrorHandler();
+            }
+            break;
+        }
+
+        case TIM_PWM_ID_2_K:
+        {
+            /* Start PWM signals generation for channel 2 */
+            if (HAL_TIM_PWM_Start(&TimMotorHandle, TIM_CHANNEL_2) != HAL_OK)
+            {
+                /* Configuration Error */
+                timer_ifLF_ErrorHandler();
+            }
+            break;
+        }
+
+        case TIM_PWM_ID_3_K:
+        {
+            /* Start PWM signals generation for channel 3 */
+            if (HAL_TIM_PWM_Start(&TimMotorHandle, TIM_CHANNEL_3) != HAL_OK)
+            {
+                /* Configuration Error */
+                timer_ifLF_ErrorHandler();
+            }
+            break;
+        }
+
+        case TIM_PWM_ID_4_K:
+        {
+            /* Start PWM signals generation for channel 4 */
+            if (HAL_TIM_PWM_Start(&TimMotorHandle, TIM_CHANNEL_4) != HAL_OK)
+            {
+                /* Configuration Error */
+                timer_ifLF_ErrorHandler();
+            }
+            break;
+        }
+
+        default:
+            /* no action */
+            break;
+    }
+}
+
+/** Function interface to stop pwm generation
+
+    @param  idx      {[0..n] pwm channel Id}
+    @return none
+ */
+void timer_ifF_StopPwm(uint8_t idx)
+{
+    switch(idx)
+    {
+        case TIM_PWM_ID_1_K:
+        {
+            /* Stop PWM signals generation for channel 1 */
+            if (HAL_TIM_PWM_Stop(&TimMotorHandle, TIM_CHANNEL_1) != HAL_OK)
+            {
+                /* Configuration Error */
+                timer_ifLF_ErrorHandler();
+            }
+            break;
+        }
+
+        case TIM_PWM_ID_2_K:
+        {
+            /* Stop PWM signals generation for channel 2 */
+            if (HAL_TIM_PWM_Stop(&TimMotorHandle, TIM_CHANNEL_2) != HAL_OK)
+            {
+                /* Configuration Error */
+                timer_ifLF_ErrorHandler();
+            }
+            break;
+        }
+
+        case TIM_PWM_ID_3_K:
+        {
+            /* Stop PWM signals generation for channel 3 */
+            if (HAL_TIM_PWM_Stop(&TimMotorHandle, TIM_CHANNEL_3) != HAL_OK)
+            {
+                /* Configuration Error */
+                timer_ifLF_ErrorHandler();
+            }
+            break;
+        }
+
+        case TIM_PWM_ID_4_K:
+        {
+            /* Stop PWM signals generation for channel 4 */
+            if (HAL_TIM_PWM_Stop(&TimMotorHandle, TIM_CHANNEL_4) != HAL_OK)
+            {
+                /* Configuration Error */
+                timer_ifLF_ErrorHandler();
+            }
+            break;
+        }
+
+        default:
+            /* no action */
+            break;
+    }
+}
+
+/** Function interface to update the pwm duty cycle
+
+    @param  idx      {[0..n] pwm channel Id}
+    @return none
+ */
+void timer_ifF_UpdatePwm(uint8_t idx, uint8_t duty_cycle_percentage)
+{
+    uint32_t duty_cycle;
+
+    // Get the equivalent duty cycle value based on the received pwm percentage
+    duty_cycle = (((PERIOD_VALUE*PWM_RESOLUTION) / PWM_PERCENT_TO_DUTY_CYCLE) * duty_cycle_percentage) / PWM_RESOLUTION;
+
+    switch(idx)
+    {
+        case TIM_PWM_ID_1_K:
+        {
+            TIMx_MOTOR_CTRL->CCR1 = duty_cycle;
+            break;
+        }
+
+        case TIM_PWM_ID_2_K:
+        {
+            TIMx_MOTOR_CTRL->CCR2 = duty_cycle;
+            break;
+        }
+
+        case TIM_PWM_ID_3_K:
+        {
+            TIMx_MOTOR_CTRL->CCR3 = duty_cycle;
+            break;
+        }
+
+        case TIM_PWM_ID_4_K:
+        {
+            TIMx_MOTOR_CTRL->CCR4 = duty_cycle;
+            break;
+        }
+
+        default:
+            /* no action */
+            break;
+    }
+}
+
+/** Function interface to return back the encoder counts captured by timer
+
+    @param  idx              {[0..n] pwm channel Id}
+    @return encoder counts
+ */
+uint32_t timer_ifF_getEncoderCount(uint8_t idx)
+{
+	uint32_t ret_enc_cnt = 0u;
+
+    switch(idx)
+    {
+        case MOTOR_ID_1_K:
+        {
+            ret_enc_cnt = TIMx_MOTOR1_ENCODER->CNT;
+            break;
+        }
+        case MOTOR_ID_2_K:
+        {
+            ret_enc_cnt = TIMx_MOTOR2_ENCODER->CNT;
+            break;
+        }
+        case MOTOR_ID_3_K:
+        {
+            ret_enc_cnt = TIMx_MOTOR3_ENCODER->CNT;
+            break;
+        }
+        case MOTOR_ID_4_K:
+        {
+            ret_enc_cnt = TIMx_MOTOR4_ENCODER->CNT;
+            break;
+        }
+        default:
+            /* no action */
+            break;
+    }
+
+    return (ret_enc_cnt);
+}
+
+/** Function interface to return back the encoder counts direction captured by timer
+
+    @param  idx              {[0..n] pwm channel Id}
+    @return Count_up=0; Count_down=1
+ */
+uint32_t timer_ifF_getEncoderCountDirection(uint8_t idx)
+{
+    uint32_t ret_dir = 0u;
+
+    switch(idx)
+    {
+        case MOTOR_ID_1_K:
+        {
+            ret_dir = __HAL_TIM_IS_TIM_COUNTING_DOWN(&Encoder1_Handle);
+            break;
+        }
+        case MOTOR_ID_2_K:
+        {
+            ret_dir = __HAL_TIM_IS_TIM_COUNTING_DOWN(&Encoder2_Handle);
+            break;
+        }
+        case MOTOR_ID_3_K:
+        {
+            ret_dir = __HAL_TIM_IS_TIM_COUNTING_DOWN(&Encoder3_Handle);
+            break;
+        }
+        case MOTOR_ID_4_K:
+        {
+            ret_dir = __HAL_TIM_IS_TIM_COUNTING_DOWN(&Encoder4_Handle);
+            break;
+        }
+        default:
+            /* no action */
+            break;
+    }
+
+    return (ret_dir);
+}
+
+/** Free-running timer ISR handler
+
+    @param  none
+    @return none
+ */
+void TIM7_IRQHandler(void)
+{
+    HAL_TIM_IRQHandler(&TimFreeRunningHandle);
+}
+
+/** Free-running timer callback function.
+    The function is called automatically everytime the timer value has elapsed.
+
+    @param  none
+    @return none
+
+    This function is used to process further the encoder counts.
+ */
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+{
+    static uint8_t TEST_ctr = 0u;
+
+    /* read and process the encoder counts */
+    encoderF_ReadCounts_Callback();
+
+    TEST_ctr++;
+    if(TEST_ctr >= 50)
+    {
+        TEST_ctr = 0u;
+        //motorF_StateMachine();
+    }
+
+
+    //HAL_GPIO_TogglePin(LD2_GPIO_Port, GPIO_PIN_0); // for TESTING ONLY
+    //HAL_GPIO_TogglePin(LD2_GPIO_Port, GPIO_PIN_1); // for TESTING ONLY
 }
 
 /**
@@ -501,306 +879,4 @@ void HAL_TIM_Base_MspInit(TIM_HandleTypeDef *htim)
     /* 3. Interrupt init */
     HAL_NVIC_SetPriority(TIM7_IRQn, 0, 0);
     HAL_NVIC_EnableIRQ(TIM7_IRQn);
-}
-
-void timer_ifF_ConfigPwmChannel(enum tim_pwm_id_et tim_id_e)
-{
-    switch(tim_id_e)
-    {
-        case TIM_PWM_ID_1_E:
-        {
-            /* Set the duty cycle for channel 1 */
-            sConfig.Pulse = 0u;
-            if (HAL_TIM_PWM_ConfigChannel(&TimHandle, &sConfig, TIM_CHANNEL_1) != HAL_OK)
-            {
-                /* Configuration Error */
-                timer_ifLF_ErrorHandler();
-            }
-            break;
-        }
-
-        case TIM_PWM_ID_2_E:
-        {
-            /* Set the duty cycle for channel 2 */
-            sConfig.Pulse = 0u;
-            if (HAL_TIM_PWM_ConfigChannel(&TimHandle, &sConfig, TIM_CHANNEL_2) != HAL_OK)
-            {
-                /* Configuration Error */
-                timer_ifLF_ErrorHandler();
-            }
-            break;
-        }
-
-        case TIM_PWM_ID_3_E:
-        {
-            /* Set the duty cycle for channel 3 */
-            sConfig.Pulse = 0u;
-            if (HAL_TIM_PWM_ConfigChannel(&TimHandle, &sConfig, TIM_CHANNEL_3) != HAL_OK)
-            {
-                /* Configuration Error */
-                timer_ifLF_ErrorHandler();
-            }
-            break;
-        }
-
-        case TIM_PWM_ID_4_E:
-        {
-            /* Set the duty cycle for channel 4 */
-            sConfig.Pulse = 0u;
-            if (HAL_TIM_PWM_ConfigChannel(&TimHandle, &sConfig, TIM_CHANNEL_4) != HAL_OK)
-            {
-                /* Configuration Error */
-                timer_ifLF_ErrorHandler();
-            }
-            break;
-        }
-
-        default:
-            /* no action */
-            break;
-    }
-}
-
-void timer_ifF_StartPwm(enum tim_pwm_id_et tim_id_e)
-{
-    switch(tim_id_e)
-    {
-        case TIM_PWM_ID_1_E:
-        {
-            /* Start PWM signals generation for channel 1 */
-            if (HAL_TIM_PWM_Start(&TimHandle, TIM_CHANNEL_1) != HAL_OK)
-            {
-                /* Configuration Error */
-                timer_ifLF_ErrorHandler();
-            }
-            break;
-        }
-
-        case TIM_PWM_ID_2_E:
-        {
-            /* Start PWM signals generation for channel 2 */
-            if (HAL_TIM_PWM_Start(&TimHandle, TIM_CHANNEL_2) != HAL_OK)
-            {
-                /* Configuration Error */
-                timer_ifLF_ErrorHandler();
-            }
-            break;
-        }
-
-        case TIM_PWM_ID_3_E:
-        {
-            /* Start PWM signals generation for channel 3 */
-            if (HAL_TIM_PWM_Start(&TimHandle, TIM_CHANNEL_3) != HAL_OK)
-            {
-                /* Configuration Error */
-                timer_ifLF_ErrorHandler();
-            }
-            break;
-        }
-
-        case TIM_PWM_ID_4_E:
-        {
-            /* Start PWM signals generation for channel 4 */
-            if (HAL_TIM_PWM_Start(&TimHandle, TIM_CHANNEL_4) != HAL_OK)
-            {
-                /* Configuration Error */
-                timer_ifLF_ErrorHandler();
-            }
-            break;
-        }
-
-        default:
-            /* no action */
-            break;
-    }
-}
-
-void timer_ifF_StopPwm(enum tim_pwm_id_et tim_id_e)
-{
-    switch(tim_id_e)
-    {
-        case TIM_PWM_ID_1_E:
-        {
-            /* Stop PWM signals generation for channel 1 */
-            if (HAL_TIM_PWM_Stop(&TimHandle, TIM_CHANNEL_1) != HAL_OK)
-            {
-                /* Configuration Error */
-                timer_ifLF_ErrorHandler();
-            }
-            break;
-        }
-
-        case TIM_PWM_ID_2_E:
-        {
-            /* Stop PWM signals generation for channel 2 */
-            if (HAL_TIM_PWM_Stop(&TimHandle, TIM_CHANNEL_2) != HAL_OK)
-            {
-                /* Configuration Error */
-                timer_ifLF_ErrorHandler();
-            }
-            break;
-        }
-
-        case TIM_PWM_ID_3_E:
-        {
-            /* Stop PWM signals generation for channel 3 */
-            if (HAL_TIM_PWM_Stop(&TimHandle, TIM_CHANNEL_3) != HAL_OK)
-            {
-                /* Configuration Error */
-                timer_ifLF_ErrorHandler();
-            }
-            break;
-        }
-
-        case TIM_PWM_ID_4_E:
-        {
-            /* Stop PWM signals generation for channel 4 */
-            if (HAL_TIM_PWM_Stop(&TimHandle, TIM_CHANNEL_4) != HAL_OK)
-            {
-                /* Configuration Error */
-                timer_ifLF_ErrorHandler();
-            }
-            break;
-        }
-
-        default:
-            /* no action */
-            break;
-    }
-}
-
-void timer_ifF_UpdatePwm(uint32_t duty_cycle_percentage, enum tim_pwm_id_et tim_id_e)
-{
-    uint32_t duty_cycle;
-
-    // Get the equivalent duty cycle value based on the received pwm percentage
-    duty_cycle = (((PERIOD_VALUE*PWM_RESOLUTION) / PWM_PERCENT_TO_DUTY_CYCLE) * duty_cycle_percentage) / PWM_RESOLUTION;
-
-    switch(tim_id_e)
-    {
-        case TIM_PWM_ID_1_E:
-        {
-            TIMx_MOTOR_CTRL->CCR1 = duty_cycle;
-            break;
-        }
-
-        case TIM_PWM_ID_2_E:
-        {
-            TIMx_MOTOR_CTRL->CCR2 = duty_cycle;
-            break;
-        }
-
-        case TIM_PWM_ID_3_E:
-        {
-            TIMx_MOTOR_CTRL->CCR3 = duty_cycle;
-            break;
-        }
-
-        case TIM_PWM_ID_4_E:
-        {
-            TIMx_MOTOR_CTRL->CCR4 = duty_cycle;
-            break;
-        }
-
-        default:
-            /* no action */
-            break;
-    }
-}
-
-uint32_t timer_ifF_getEncoderCount(enum encoder_id_et enc_id_e)
-{
-	uint32_t ret_enc_cnt = 0u;
-
-    switch(enc_id_e)
-    {
-        case ENCODER_ID_1_E:
-        {
-            ret_enc_cnt = TIMx_MOTOR1_ENCODER->CNT;
-            break;
-        }
-        case ENCODER_ID_2_E:
-        {
-            ret_enc_cnt = TIMx_MOTOR2_ENCODER->CNT;
-            break;
-        }
-        case ENCODER_ID_3_E:
-        {
-            ret_enc_cnt = TIMx_MOTOR3_ENCODER->CNT;
-            break;
-        }
-        case ENCODER_ID_4_E:
-        {
-            ret_enc_cnt = TIMx_MOTOR4_ENCODER->CNT;
-            break;
-        }
-        default:
-            /* no action */
-            break;
-    }
-
-    return (ret_enc_cnt);
-}
-
-uint32_t timer_ifF_getEncoderCountDirection(enum encoder_id_et enc_id_e)
-{
-    uint32_t ret_dir = 0u;
-
-    /* Counting-up   = 0
-       Counting-down = 1
-    */
-
-    switch(enc_id_e)
-    {
-        case ENCODER_ID_1_E:
-        {
-            ret_dir = __HAL_TIM_IS_TIM_COUNTING_DOWN(&Encoder1_Handle);
-            break;
-        }
-        case ENCODER_ID_2_E:
-        {
-            ret_dir = __HAL_TIM_IS_TIM_COUNTING_DOWN(&Encoder2_Handle);
-            break;
-        }
-        case ENCODER_ID_3_E:
-        {
-            ret_dir = __HAL_TIM_IS_TIM_COUNTING_DOWN(&Encoder3_Handle);
-            break;
-        }
-        case ENCODER_ID_4_E:
-        {
-            ret_dir = __HAL_TIM_IS_TIM_COUNTING_DOWN(&Encoder4_Handle);
-            break;
-        }
-        default:
-            /* no action */
-            break;
-    }
-
-    return (ret_dir);
-}
-
-void timer_ifF_ReadEncoderCounts(void)
-{
-    encoder_counter = TIMx_MOTOR4_ENCODER->CNT;//__HAL_TIM_GET_COUNTER(&Encoder1_Handle);
-}
-
-void timer_ifF_TestFunction(void)
-{
-    //HAL_GPIO_TogglePin(LD2_GPIO_Port, GPIO_PIN_0); // for TESTING ONLY
-    //HAL_GPIO_TogglePin(LD2_GPIO_Port, GPIO_PIN_1); // for TESTING ONLY
-}
-
-// Free running timer
-void TIM7_IRQHandler(void)
-{
-    HAL_TIM_IRQHandler(&TimFreeRunningHandle);
-}
-
-void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
-{
-    //HAL_GPIO_TogglePin(LD2_GPIO_Port, GPIO_PIN_0); // for TESTING ONLY
-    //HAL_GPIO_TogglePin(LD2_GPIO_Port, GPIO_PIN_1); // for TESTING ONLY
-
-    encoderF_ReadCounts_Callback();
 }

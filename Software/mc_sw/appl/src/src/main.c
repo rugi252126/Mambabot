@@ -43,15 +43,13 @@
 /* USER CODE BEGIN Includes */
 
 #include "ros_if.h"
+#include "gpio_if.h"
 #include "timer_if.h"
 /* USER CODE END Includes */
 
 /* Private variables ---------------------------------------------------------*/
 //UART_HandleTypeDef huart2;
 UART_HandleTypeDef huart3;
-static uint8_t test=0;
-//static uint32_t en_cnt_data=0;
-//static uint32_t mot_dir=0;
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
 
@@ -59,7 +57,6 @@ static uint8_t test=0;
 
 /* Private function prototypes -----------------------------------------------*/
 static void SystemClock_Config(void);
-static void mainLF_InitGpioClock(void);
 static void mainLF_Init_USART3_UART(void);
 
 
@@ -101,7 +98,7 @@ int main(void)
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
-  mainLF_InitGpioClock();
+  gpio_ifF_Init();
 
   mainLF_Init_USART3_UART();
 
@@ -118,81 +115,13 @@ int main(void)
   /* USER CODE END WHILE */
 
   /* USER CODE BEGIN 3 */
-	  if(test != 1)
-	  {
-		  test = 1;
-	      //HAL_Delay(5000);
-	      //timer_ifF_UpdatePwm(75,TIM_PWM_ID_1_E);
-	  }
 
 	  ros_ifF_Loop();
-	  //en_cnt_data = timer_ifF_getEncoderCount();
-	  //mot_dir = timer_ifF_getMotorDirection();
-	  //ros_ifF_setEncoderData_Debug(en_cnt_data, mot_dir);
   }
   /* USER CODE END 3 */
 
 }
 
-#if 0
-/**
-  * @brief System Clock Configuration
-  * @retval None
-  */
-void SystemClock_Config(void)
-{
-
-  RCC_OscInitTypeDef RCC_OscInitStruct;
-  RCC_ClkInitTypeDef RCC_ClkInitStruct;
-
-    /**Configure the main internal regulator output voltage 
-    */
-  __HAL_RCC_PWR_CLK_ENABLE();
-
-  __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
-
-    /**Initializes the CPU, AHB and APB busses clocks 
-    */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
-  RCC_OscInitStruct.HSIState = RCC_HSI_ON;
-  RCC_OscInitStruct.HSICalibrationValue = 16;
-  RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
-  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
-  RCC_OscInitStruct.PLL.PLLM = 16;
-  RCC_OscInitStruct.PLL.PLLN = 336;
-  RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV4;
-  RCC_OscInitStruct.PLL.PLLQ = 4;
-  if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
-  {
-    _Error_Handler(__FILE__, __LINE__);
-  }
-
-    /**Initializes the CPU, AHB and APB busses clocks 
-    */
-  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
-                              |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
-  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
-  RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
-  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV2;
-  RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
-
-  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_2) != HAL_OK)
-  {
-    _Error_Handler(__FILE__, __LINE__);
-  }
-
-    /**Configure the Systick interrupt time 
-    */
-  HAL_SYSTICK_Config(HAL_RCC_GetHCLKFreq()/1000);
-
-    /**Configure the Systick 
-    */
-  HAL_SYSTICK_CLKSourceConfig(SYSTICK_CLKSOURCE_HCLK);
-
-  /* SysTick_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(SysTick_IRQn, 0, 0);
-}
-#else
 /* 180Mhz system clock */
 /**
   * @brief  System Clock Configuration
@@ -250,7 +179,6 @@ static void SystemClock_Config(void)
   RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV2;
   HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_5);
 }
-#endif
 
 /* USART3 init function */
 static void mainLF_Init_USART3_UART(void)
@@ -270,57 +198,6 @@ static void mainLF_Init_USART3_UART(void)
 
 }
 
-/** Configure pins as 
-        * Analog 
-        * Input 
-        * Output
-        * EVENT_OUT
-        * EXTI
-*/
-static void mainLF_InitGpioClock(void)
-{
-
-    GPIO_InitTypeDef GPIO_InitStruct;
-
-    /** GPIO Ports Clock Enable */
-    //__HAL_RCC_GPIOH_CLK_ENABLE();
-    /* IO for motor1 channel1 */
-    __HAL_RCC_GPIOA_CLK_ENABLE();
-    /* IO for motor1 channel 2 and motor2 encoders */
-    __HAL_RCC_GPIOB_CLK_ENABLE();
-    /* IO for motor4 encoders */
-    __HAL_RCC_GPIOC_CLK_ENABLE();
-    /* IO for motor3 encoder and USART3 for ROSserial communication */
-    __HAL_RCC_GPIOD_CLK_ENABLE();
-    /* IO for motor1, motor2, motor3, and motor4 pwm generation */
-    __HAL_RCC_GPIOE_CLK_ENABLE();
-
-  /*Configure GPIO pin Output Level */
-//  HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_RESET);
-
-  /*Configure GPIO pin : B1_Pin */
-  //GPIO_InitStruct.Pin = B1_Pin;
-  //GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
-  //GPIO_InitStruct.Pull = GPIO_NOPULL;
-  //HAL_GPIO_Init(B1_GPIO_Port, &GPIO_InitStruct);
-
-  /*Configure GPIO pin : LED1_Pin */
-  GPIO_InitStruct.Pin = GPIO_PIN_0;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(LD2_GPIO_Port, &GPIO_InitStruct);
-
-  /*Configure GPIO pin :  */
-  GPIO_InitStruct.Pin = GPIO_PIN_1;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(LD2_GPIO_Port, &GPIO_InitStruct);
-
-  //HAL_GPIO_WritePin(LD2_GPIO_Port, GPIO_PIN_0, GPIO_PIN_SET);
-  // HAL_GPIO_TogglePin(LD2_GPIO_Port, GPIO_PIN_0);
-}
 
 /* USER CODE BEGIN 4 */
 
