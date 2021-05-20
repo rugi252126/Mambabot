@@ -15,9 +15,14 @@
 /* Private typedef -----------------------------------------------------------*/
 #define TIM_PWM_ID_1_K                            MOTOR_ID_1_K /* for Motor1 Pwm Control     */
 #define TIM_PWM_ID_2_K                            MOTOR_ID_2_K /* for Motor2 Pwm Control     */
+#if defined(VAR_4WD_USED)
 #define TIM_PWM_ID_3_K                            MOTOR_ID_3_K /* for Motor3 Pwm Control     */
 #define TIM_PWM_ID_4_K                            MOTOR_ID_4_K /* for Motor4 Pwm Control     */
-#define TIM_PWM_ID_5_K                            (uint8_t)(4) /* for Head-light Pwm Control */
+#define TIM_PWM_ID_5_K                            (uint8_t)(TIM_PWM_ID_4_K+1) /* for Head-light Pwm Control */
+#else
+#define TIM_PWM_ID_5_K                            (uint8_t)(TIM_PWM_ID_2_K+1) /* for Head-light Pwm Control */
+#endif // VAR_4WD_USED
+
 
 /* Timer for Motor PWM Control */
 #define TIMx_MOTOR_CTRL                           TIM1
@@ -26,45 +31,51 @@
 /* Definition for TIMx_MOTOR_CTRL Channel Pins */
 #define TIMx_MOTOR_CTRL_GPIO_PORT_CHANNEL1        GPIOE
 #define TIMx_MOTOR_CTRL_GPIO_PORT_CHANNEL2        GPIOE
-#define TIMx_MOTOR_CTRL_GPIO_PORT_CHANNEL3        GPIOE
-#define TIMx_MOTOR_CTRL_GPIO_PORT_CHANNEL4        GPIOE
 #define TIMx_MOTOR_CTRL_GPIO_PIN_CHANNEL1         GPIO_PIN_9
 #define TIMx_MOTOR_CTRL_GPIO_PIN_CHANNEL2         GPIO_PIN_11
-#define TIMx_MOTOR_CTRL_GPIO_PIN_CHANNEL3         GPIO_PIN_13
-#define TIMx_MOTOR_CTRL_GPIO_PIN_CHANNEL4         GPIO_PIN_14
 #define TIMx_MOTOR_CTRL_GPIO_AF_CHANNEL1          GPIO_AF1_TIM1
 #define TIMx_MOTOR_CTRL_GPIO_AF_CHANNEL2          GPIO_AF1_TIM1
+#if defined(VAR_4WD_USED)
+#define TIMx_MOTOR_CTRL_GPIO_PORT_CHANNEL3        GPIOE
+#define TIMx_MOTOR_CTRL_GPIO_PORT_CHANNEL4        GPIOE
+#define TIMx_MOTOR_CTRL_GPIO_PIN_CHANNEL3         GPIO_PIN_13
+#define TIMx_MOTOR_CTRL_GPIO_PIN_CHANNEL4         GPIO_PIN_14
 #define TIMx_MOTOR_CTRL_GPIO_AF_CHANNEL3          GPIO_AF1_TIM1
 #define TIMx_MOTOR_CTRL_GPIO_AF_CHANNEL4          GPIO_AF1_TIM1
+#endif // VAR_4WD_USED
 
 /* Timers for Motor Encoder */
 #define TIMx_MOTOR1_ENCODER                       TIM2
 #define TIMx_MOTOR1_ENCODER_CLK_ENABLE()          __HAL_RCC_TIM2_CLK_ENABLE()
 #define TIMx_MOTOR2_ENCODER                       TIM3
 #define TIMx_MOTOR2_ENCODER_CLK_ENABLE()          __HAL_RCC_TIM3_CLK_ENABLE()
+#if defined(VAR_4WD_USED)
 #define TIMx_MOTOR3_ENCODER                       TIM4
 #define TIMx_MOTOR3_ENCODER_CLK_ENABLE()          __HAL_RCC_TIM4_CLK_ENABLE()
 #define TIMx_MOTOR4_ENCODER                       TIM8
 #define TIMx_MOTOR4_ENCODER_CLK_ENABLE()          __HAL_RCC_TIM8_CLK_ENABLE()
+#endif // VAR_4WD_USED
 
 /* Definition for Motor Encoder Channel Pins */
 #define TIMx_MOTOR1_ENCODER_GPIO_PORT_CHANNEL1    GPIOA
 #define TIMx_MOTOR1_ENCODER_GPIO_PORT_CHANNEL2    GPIOB
 #define TIMx_MOTOR2_ENCODER_GPIO_PORT_CHANNEL1_2  GPIOB
-#define TIMx_MOTOR3_ENCODER_GPIO_PORT_CHANNEL1_2  GPIOD
-#define TIMx_MOTOR4_ENCODER_GPIO_PORT_CHANNEL1_2  GPIOC
 #define TIMx_MOTOR1_ENCODER_GPIO_PIN_CHANNEL1     GPIO_PIN_15
 #define TIMx_MOTOR1_ENCODER_GPIO_PIN_CHANNEL2     GPIO_PIN_3
 #define TIMx_MOTOR2_ENCODER_GPIO_PIN_CHANNEL1     GPIO_PIN_4
 #define TIMx_MOTOR2_ENCODER_GPIO_PIN_CHANNEL2     GPIO_PIN_5
+#define TIMx_MOTOR1_ENCODER_GPIO_AF_CHANNEL1_2    GPIO_AF1_TIM2
+#define TIMx_MOTOR2_ENCODER_GPIO_AF_CHANNEL1_2    GPIO_AF2_TIM3
+#if defined(VAR_4WD_USED)
+#define TIMx_MOTOR3_ENCODER_GPIO_PORT_CHANNEL1_2  GPIOD
+#define TIMx_MOTOR4_ENCODER_GPIO_PORT_CHANNEL1_2  GPIOC
 #define TIMx_MOTOR3_ENCODER_GPIO_PIN_CHANNEL1     GPIO_PIN_12
 #define TIMx_MOTOR3_ENCODER_GPIO_PIN_CHANNEL2     GPIO_PIN_13
 #define TIMx_MOTOR4_ENCODER_GPIO_PIN_CHANNEL1     GPIO_PIN_6
 #define TIMx_MOTOR4_ENCODER_GPIO_PIN_CHANNEL2     GPIO_PIN_7
-#define TIMx_MOTOR1_ENCODER_GPIO_AF_CHANNEL1_2    GPIO_AF1_TIM2
-#define TIMx_MOTOR2_ENCODER_GPIO_AF_CHANNEL1_2    GPIO_AF2_TIM3
 #define TIMx_MOTOR3_ENCODER_GPIO_AF_CHANNEL1_2    GPIO_AF2_TIM4
 #define TIMx_MOTOR4_ENCODER_GPIO_AF_CHANNEL1_2    GPIO_AF3_TIM8
+#endif // VAR_4WD_USED
 
 /* Free running timer */
 #define TIMx_FREE_RUNNING_TIMER                   TIM7
@@ -83,8 +94,10 @@ TIM_HandleTypeDef    TimMotorHandle;
 TIM_HandleTypeDef    TimFreeRunningHandle;
 TIM_HandleTypeDef    Encoder1_Handle;
 TIM_HandleTypeDef    Encoder2_Handle;
+#if defined(VAR_4WD_USED)
 TIM_HandleTypeDef    Encoder3_Handle;
 TIM_HandleTypeDef    Encoder4_Handle;
+#endif // VAR_4WD_USED
 
 /* Timer Output Compare Configuration Structure declaration */
 TIM_OC_InitTypeDef sMotorConfig;
@@ -92,8 +105,10 @@ TIM_OC_InitTypeDef sMotorConfig;
 /* Timer Encoder Configuration Structure declaration */
 TIM_Encoder_InitTypeDef sEncoder1Config;
 TIM_Encoder_InitTypeDef sEncoder2Config;
+#if defined(VAR_4WD_USED)
 TIM_Encoder_InitTypeDef sEncoder3Config;
 TIM_Encoder_InitTypeDef sEncoder4Config;
+#endif // VAR_4WD_USED
 
 /***** Local function prototypes */
 static void timer_ifLF_InitFreeRunningTimer(void);
@@ -201,14 +216,18 @@ static void timer_ifLF_InitPwm(void)
 
     timer_ifF_ConfigPwmChannel(TIM_PWM_ID_1_K);
     timer_ifF_ConfigPwmChannel(TIM_PWM_ID_2_K);
+#if defined(VAR_4WD_USED)
     timer_ifF_ConfigPwmChannel(TIM_PWM_ID_3_K);
     timer_ifF_ConfigPwmChannel(TIM_PWM_ID_4_K);
+#endif // VAR_4WD_USED
 
     /*##-3- Start PWM signals generation #######################################*/
     timer_ifF_StartPwm(TIM_PWM_ID_1_K);
     timer_ifF_StartPwm(TIM_PWM_ID_2_K);
+#if defined(VAR_4WD_USED)
     timer_ifF_StartPwm(TIM_PWM_ID_3_K);
     timer_ifF_StartPwm(TIM_PWM_ID_4_K);
+#endif // VAR_4WD_USED
 }
 
 /** Initialization of timers used for encoder reading
@@ -286,6 +305,7 @@ static void timer_ifLF_InitEncoder(void)
     	timer_ifLF_ErrorHandler();
     }
 
+#if defined(VAR_4WD_USED)
     /* -1- Initialize TIMx_MOTOR3_ENCODER to handle the encoder sensor */
     /* Initialize TIMx_MOTOR3_ENCODER peripheral as follow:
 	       + Period = 65535
@@ -353,12 +373,15 @@ static void timer_ifLF_InitEncoder(void)
         /* Initialization Error */
     	timer_ifLF_ErrorHandler();
     }
+#endif // VAR_4WD_USED
 
     /* Start the encoder interface timers */
     HAL_TIM_Encoder_Start(&Encoder1_Handle, TIM_CHANNEL_ALL);
     HAL_TIM_Encoder_Start(&Encoder2_Handle, TIM_CHANNEL_ALL);
+#if defined(VAR_4WD_USED)
     HAL_TIM_Encoder_Start(&Encoder3_Handle, TIM_CHANNEL_ALL);
     HAL_TIM_Encoder_Start(&Encoder4_Handle, TIM_CHANNEL_ALL);
+#endif // VAR_4WD_USED
 }
 
 /** Error handler function
@@ -422,7 +445,7 @@ void timer_ifF_ConfigPwmChannel(uint8_t idx)
             }
             break;
         }
-
+#if defined(VAR_4WD_USED)
         case TIM_PWM_ID_3_K:
         {
             /* Set the duty cycle for channel 3 */
@@ -446,7 +469,7 @@ void timer_ifF_ConfigPwmChannel(uint8_t idx)
             }
             break;
         }
-
+#endif // VAR_4WD_USED
         default:
             /* no action */
             break;
@@ -483,7 +506,7 @@ void timer_ifF_StartPwm(uint8_t idx)
             }
             break;
         }
-
+#if defined(VAR_4WD_USED)
         case TIM_PWM_ID_3_K:
         {
             /* Start PWM signals generation for channel 3 */
@@ -505,7 +528,7 @@ void timer_ifF_StartPwm(uint8_t idx)
             }
             break;
         }
-
+#endif // VAR_4WD_USED
         default:
             /* no action */
             break;
@@ -542,7 +565,7 @@ void timer_ifF_StopPwm(uint8_t idx)
             }
             break;
         }
-
+#if defined(VAR_4WD_USED)
         case TIM_PWM_ID_3_K:
         {
             /* Stop PWM signals generation for channel 3 */
@@ -564,7 +587,7 @@ void timer_ifF_StopPwm(uint8_t idx)
             }
             break;
         }
-
+#endif // VAR_4WD_USED
         default:
             /* no action */
             break;
@@ -580,8 +603,15 @@ void timer_ifF_UpdatePwm(uint8_t idx, uint8_t duty_cycle_percentage)
 {
     uint32_t duty_cycle;
 
-    // Get the equivalent duty cycle value based on the received pwm percentage
-    duty_cycle = (((PERIOD_VALUE*PWM_RESOLUTION) / PWM_PERCENT_TO_DUTY_CYCLE) * duty_cycle_percentage) / PWM_RESOLUTION;
+    if(duty_cycle_percentage >= PWM_PERCENT_TO_DUTY_CYCLE)
+    {
+        duty_cycle = PERIOD_VALUE;
+    }
+    else
+    {
+        // Get the equivalent duty cycle value based on the received pwm percentage
+        duty_cycle = (((PERIOD_VALUE*PWM_RESOLUTION) / PWM_PERCENT_TO_DUTY_CYCLE) * duty_cycle_percentage) / PWM_RESOLUTION;
+    }
 
     switch(idx)
     {
@@ -596,7 +626,7 @@ void timer_ifF_UpdatePwm(uint8_t idx, uint8_t duty_cycle_percentage)
             TIMx_MOTOR_CTRL->CCR2 = duty_cycle;
             break;
         }
-
+#if defined(VAR_4WD_USED)
         case TIM_PWM_ID_3_K:
         {
             TIMx_MOTOR_CTRL->CCR3 = duty_cycle;
@@ -608,7 +638,7 @@ void timer_ifF_UpdatePwm(uint8_t idx, uint8_t duty_cycle_percentage)
             TIMx_MOTOR_CTRL->CCR4 = duty_cycle;
             break;
         }
-
+#endif // VAR_4WD_USED
         default:
             /* no action */
             break;
@@ -631,21 +661,25 @@ uint32_t timer_ifF_getEncoderCount(uint8_t idx)
             ret_enc_cnt = TIMx_MOTOR1_ENCODER->CNT;
             break;
         }
+
         case MOTOR_ID_2_K:
         {
             ret_enc_cnt = TIMx_MOTOR2_ENCODER->CNT;
             break;
         }
+#if defined(VAR_4WD_USED)
         case MOTOR_ID_3_K:
         {
             ret_enc_cnt = TIMx_MOTOR3_ENCODER->CNT;
             break;
         }
+
         case MOTOR_ID_4_K:
         {
             ret_enc_cnt = TIMx_MOTOR4_ENCODER->CNT;
             break;
         }
+#endif // VAR_4WD_USED
         default:
             /* no action */
             break;
@@ -670,11 +704,13 @@ uint32_t timer_ifF_getEncoderCountDirection(uint8_t idx)
             ret_dir = __HAL_TIM_IS_TIM_COUNTING_DOWN(&Encoder1_Handle);
             break;
         }
+
         case MOTOR_ID_2_K:
         {
             ret_dir = __HAL_TIM_IS_TIM_COUNTING_DOWN(&Encoder2_Handle);
             break;
         }
+#if defined(VAR_4WD_USED)
         case MOTOR_ID_3_K:
         {
             ret_dir = __HAL_TIM_IS_TIM_COUNTING_DOWN(&Encoder3_Handle);
@@ -685,6 +721,7 @@ uint32_t timer_ifF_getEncoderCountDirection(uint8_t idx)
             ret_dir = __HAL_TIM_IS_TIM_COUNTING_DOWN(&Encoder4_Handle);
             break;
         }
+#endif // VAR_4WD_USED
         default:
             /* no action */
             break;
@@ -713,21 +750,8 @@ void TIM7_IRQHandler(void)
  */
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
-    static uint8_t TEST_ctr = 0u;
-
     /* read and process the encoder counts */
     encoderF_ReadCounts_Callback();
-
-    TEST_ctr++;
-    if(TEST_ctr >= 50)
-    {
-        TEST_ctr = 0u;
-        //motorF_StateMachine();
-    }
-
-
-    //HAL_GPIO_TogglePin(LD2_GPIO_Port, GPIO_PIN_0); // for TESTING ONLY
-    //HAL_GPIO_TogglePin(LD2_GPIO_Port, GPIO_PIN_1); // for TESTING ONLY
 }
 
 /**
@@ -767,6 +791,7 @@ void HAL_TIM_PWM_MspInit(TIM_HandleTypeDef *htim)
     GPIO_InitStruct.Pin = TIMx_MOTOR_CTRL_GPIO_PIN_CHANNEL2;
     HAL_GPIO_Init(TIMx_MOTOR_CTRL_GPIO_PORT_CHANNEL2, &GPIO_InitStruct);
 
+#if defined(VAR_4WD_USED)
     /* Pwm Channel 3 */
     GPIO_InitStruct.Alternate = TIMx_MOTOR_CTRL_GPIO_AF_CHANNEL3;
     GPIO_InitStruct.Pin = TIMx_MOTOR_CTRL_GPIO_PIN_CHANNEL3;
@@ -776,6 +801,7 @@ void HAL_TIM_PWM_MspInit(TIM_HandleTypeDef *htim)
     GPIO_InitStruct.Alternate = TIMx_MOTOR_CTRL_GPIO_AF_CHANNEL4;
     GPIO_InitStruct.Pin = TIMx_MOTOR_CTRL_GPIO_PIN_CHANNEL4;
     HAL_GPIO_Init(TIMx_MOTOR_CTRL_GPIO_PORT_CHANNEL4, &GPIO_InitStruct);
+#endif // VAR_4WD_USED
 }
 
 /**
@@ -795,10 +821,12 @@ void HAL_TIM_Encoder_MspInit(TIM_HandleTypeDef *htim)
     TIMx_MOTOR1_ENCODER_CLK_ENABLE();
     /* TIMx_MOTOR2_ENCODER Peripheral clock enable */
     TIMx_MOTOR2_ENCODER_CLK_ENABLE();
+#if defined(VAR_4WD_USED)
     /* TIMx_MOTOR3_ENCODER Peripheral clock enable */
     TIMx_MOTOR3_ENCODER_CLK_ENABLE();
     /* TIMx_MOTOR4_ENCODER Peripheral clock enable */
     TIMx_MOTOR4_ENCODER_CLK_ENABLE();
+#endif // VAR_4WD_USED
 
     /* Enable GPIO Channels Clock */
     /* GPIO clock is initialized in function "mainLF_InitGpioClock" */
@@ -833,6 +861,7 @@ void HAL_TIM_Encoder_MspInit(TIM_HandleTypeDef *htim)
     GPIO_InitStruct.Pin = TIMx_MOTOR2_ENCODER_GPIO_PIN_CHANNEL2;
     HAL_GPIO_Init(TIMx_MOTOR2_ENCODER_GPIO_PORT_CHANNEL1_2, &GPIO_InitStruct);
 
+#if defined(VAR_4WD_USED)
     /* Configuration for Motor3 encoder */
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
     GPIO_InitStruct.Pull = GPIO_PULLUP;
@@ -860,6 +889,7 @@ void HAL_TIM_Encoder_MspInit(TIM_HandleTypeDef *htim)
     /* Motor4 encoder Channel 2 configuration */
     GPIO_InitStruct.Pin = TIMx_MOTOR4_ENCODER_GPIO_PIN_CHANNEL2;
     HAL_GPIO_Init(TIMx_MOTOR4_ENCODER_GPIO_PORT_CHANNEL1_2, &GPIO_InitStruct);
+#endif // VAR_4WD_USED
 }
 
 /**

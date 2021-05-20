@@ -14,16 +14,15 @@
 #include "encoder.h"
 
 /***** Macros */
-#define COUNT_TO_MILLISECONDS_K      (uint32_t)(1000)
-#define MILLISECONDS_TO_MINUTES_K    (int32_t)(60000)
-#define MAX_ENCODER_COUNT_K          (uint32_t)(65535)
-#define MIN_ENCODER_COUNT_K          (uint32_t)(0)
+#define ENCODER_MILLISECONDS_TO_MINUTES_K    (uint32_t)(60000) /* 60 x 1000 */
+#define ENCODER_MAX_COUNT_K                  (uint32_t)(65535)
+#define ENCODER_MIN_COUNT_K                  (uint32_t)(0)
+#define ENCODER_OVERFLOW_COUNT_THRESHOLD_K   (uint32_t)(ENCODER_MAX_COUNT_K/2)
 
 
 /***** Variables */
 struct time_st
 {
-    uint32_t xMs_time_ctr;      /* counter is incremented every 1ms */
     uint32_t current_time;
     uint32_t previous_time;
 };
@@ -31,17 +30,18 @@ struct time_st
 /* the counts will increment/decrement by 4 as per the timer encoder configuration */
 struct counts_st
 {
-    uint32_t current_cnt;
-    uint32_t previous_cnt;
-    uint32_t delta_cnt;
+    uint32_t raw_current_cnt;
+    uint32_t raw_previous_cnt;
+    uint32_t processed_current_cnt;
+    uint32_t processed_previous_cnt;
     int32_t  overtime_cnt;
 };
 
 struct encoder_st
 {
-    uint32_t         rpm[MOTOR_NUM_ID_K];
-    struct time_st   time_s;
-    struct counts_st counts_s[MOTOR_NUM_ID_K];
+    uint32_t            rpm[MOTOR_NUM_ID_K];
+    struct time_st      time_s[MOTOR_NUM_ID_K];
+    struct counts_st    counts_s[MOTOR_NUM_ID_K];
 };
 
 static struct encoder_st  encoder_s;
@@ -61,47 +61,38 @@ static void encoderLF_processEncoderCounts(uint8_t mot_id, uint32_t dir);
  */
 static void encoderLF_processEncoderCounts(uint8_t mot_id, uint32_t dir)
 {
-    uint32_t tmp_cnt = 0u;
+    uint32_t tmp_delta_cnt = 0;
 
+    if(encoder_s.counts_s[mot_id].raw_current_cnt > encoder_s.counts_s[mot_id].raw_previous_cnt)
+    {
+        tmp_delta_cnt = encoder_s.counts_s[mot_id].raw_current_cnt - encoder_s.counts_s[mot_id].raw_previous_cnt;
+    }
+    else
+    {
+        tmp_delta_cnt = encoder_s.counts_s[mot_id].raw_previous_cnt - encoder_s.counts_s[mot_id].raw_current_cnt;
+    }
+
+    /* check for overflow */
+    if(tmp_delta_cnt > ENCODER_OVERFLOW_COUNT_THRESHOLD_K)
+    {
+        /* get the delta based on the maximum encoder counts */
+        tmp_delta_cnt = ENCODER_MAX_COUNT_K - tmp_delta_cnt;
+    }
+
+    /* save a copy of current encoder count */
+    encoder_s.counts_s[mot_id].raw_previous_cnt = encoder_s.counts_s[mot_id].raw_current_cnt;
+
+    /* update the counts over the period of time */
+    encoder_s.counts_s[mot_id].processed_current_cnt += tmp_delta_cnt;
+
+    /* save the counts over the period of time with respect to encoder count direction */
     if(1u == dir)
     { /* Counting down */
-        /* check for overflow */
-        if(encoder_s.counts_s[mot_id].previous_cnt < encoder_s.counts_s[mot_id].current_cnt)
-        {
-            /* overflow occurred. do the correction */
-            tmp_cnt = (MAX_ENCODER_COUNT_K - encoder_s.counts_s[mot_id].current_cnt) + encoder_s.counts_s[mot_id].previous_cnt;
-            encoder_s.counts_s[mot_id].delta_cnt = tmp_cnt;
-        }
-        else
-        {
-            encoder_s.counts_s[mot_id].delta_cnt = encoder_s.counts_s[mot_id].previous_cnt - encoder_s.counts_s[mot_id].current_cnt;
-        }
-
-        /* save a copy of current encoder count */
-        encoder_s.counts_s[mot_id].previous_cnt = encoder_s.counts_s[mot_id].current_cnt;
-
-        /* register the counts over the period of time */
-        encoder_s.counts_s[mot_id].overtime_cnt -= encoder_s.counts_s[mot_id].delta_cnt;
+        encoder_s.counts_s[mot_id].overtime_cnt -= tmp_delta_cnt;
     }
     else
     { /* Counting up */
-        /* check for overflow */
-        if(encoder_s.counts_s[mot_id].previous_cnt > encoder_s.counts_s[mot_id].current_cnt)
-        {
-            /* overflow occurred. do the correction */
-            tmp_cnt = (MAX_ENCODER_COUNT_K - encoder_s.counts_s[mot_id].previous_cnt) + encoder_s.counts_s[mot_id].current_cnt;
-            encoder_s.counts_s[mot_id].delta_cnt = tmp_cnt;
-        }
-        else
-        {
-            encoder_s.counts_s[mot_id].delta_cnt = encoder_s.counts_s[mot_id].current_cnt - encoder_s.counts_s[mot_id].previous_cnt;
-        }
-
-        /* save a copy of current encoder count */
-        encoder_s.counts_s[mot_id].previous_cnt = encoder_s.counts_s[mot_id].current_cnt;
-
-        /* register the counts over the period of time */
-        encoder_s.counts_s[mot_id].overtime_cnt += encoder_s.counts_s[mot_id].delta_cnt;
+        encoder_s.counts_s[mot_id].overtime_cnt += tmp_delta_cnt;
     }
 }
 
@@ -130,16 +121,21 @@ void encoderF_Init(void)
 int32_t encoderF_getRPM(uint8_t mot_id)
 {
     /* get the elapsed time */
-    uint32_t dT = encoder_s.time_s.current_time - encoder_s.time_s.previous_time;
+    uint32_t dT = encoder_s.time_s[mot_id].current_time - encoder_s.time_s[mot_id].previous_time;
 
     /* convert milliseconds to minutes */
-    double dtm = (double)dT / MILLISECONDS_TO_MINUTES_K;
+    double dtm = (double)dT / ENCODER_MILLISECONDS_TO_MINUTES_K;
+
+    double delta_cnt = encoder_s.counts_s[mot_id].processed_current_cnt - encoder_s.counts_s[mot_id].processed_previous_cnt;
 
     /* save a copy of current time */
-    encoder_s.time_s.previous_time = encoder_s.time_s.current_time;
+    encoder_s.time_s[mot_id].previous_time = encoder_s.time_s[mot_id].current_time;
 
-    // calculate wheel's speed (in RPM) and return the value
-    return (((double)encoder_s.counts_s[mot_id].delta_cnt / (int32_t)MOTOR_ENCODER_COUNTS_PER_REVOLUTION_K) / dtm);
+    /* save a copy of current count */
+    encoder_s.counts_s[mot_id].processed_previous_cnt = encoder_s.counts_s[mot_id].processed_current_cnt;
+
+    /* calculate wheel's speed (in RPM) and return the value */
+    return ((delta_cnt / MOTOR_ENCODER_COUNTS_PER_REVOLUTION_K) / dtm);
 }
 
 /** Function to return the registered encoder count over the period of time.
@@ -172,31 +168,31 @@ void encoderF_ReadCounts_Callback(void)
 {
     uint8_t idx = 0u;
     uint32_t cnt_dir = 0u;
+    static uint32_t xMs_time_ctr = 0u;
 
     /* Overflow will occur approximately around 50 days on continuous operation */
-    encoder_s.time_s.xMs_time_ctr++;
-    /* convert count to millisecond (e.g. 1 = 1000ms */
-    encoder_s.time_s.current_time = encoder_s.time_s.xMs_time_ctr * COUNT_TO_MILLISECONDS_K;
+    xMs_time_ctr++;
 
     /* Read the current encoder counts and direction */
     for(idx=0u; idx < (uint8_t)MOTOR_NUM_ID_K; idx++)
     {
-        encoder_s.counts_s[idx].current_cnt = timer_ifF_getEncoderCount(idx);
+        encoder_s.time_s[idx].current_time = xMs_time_ctr;
+
+        encoder_s.counts_s[idx].raw_current_cnt = timer_ifF_getEncoderCount(idx);
         cnt_dir = timer_ifF_getEncoderCountDirection(idx);
 
         /* encoder plausibility check */
-        if(    (MAX_ENCODER_COUNT_K == encoder_s.counts_s[idx].current_cnt )
-            && (MIN_ENCODER_COUNT_K == encoder_s.counts_s[idx].previous_cnt)
+        if(    (ENCODER_MAX_COUNT_K == encoder_s.counts_s[idx].raw_current_cnt )
+            && (ENCODER_MIN_COUNT_K == encoder_s.counts_s[idx].raw_previous_cnt)
         )
         {
             /* no further action. no pulses generated from encoder
-               having MIN_ENCODER_COUNT_K and MAX_ENCODER_COUNT_K value won't happen unless encoder is not generating any pulses
+               having ENCODER_MIN_COUNT_K and ENCODER_MAX_COUNT_K value won't happen unless encoder is not generating any pulses
             */
         }
         else
         {
             encoderLF_processEncoderCounts(idx, cnt_dir);
         }
-
     }
 }

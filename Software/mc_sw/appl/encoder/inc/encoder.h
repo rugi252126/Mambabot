@@ -17,6 +17,9 @@
  */
 void encoderF_Init(void);
 
+#ifdef __cplusplus
+extern "C"{
+#endif
 /** Function to return the current motor RPM
     RPM is calculated based on encoder information and with respect
     to elapsed time.
@@ -34,6 +37,9 @@ int32_t encoderF_getRPM(uint8_t mot_id);
     @return encoder counts
  */
 int32_t encoderF_getEncoderCountsOvertime(uint8_t mot_id);
+#ifdef __cplusplus
+}
+#endif
 
 /** Function reads the encoder counts and direction from the timer interface module
     The function will be called in every timer interrupt.

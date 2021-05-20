@@ -63,6 +63,8 @@
 
 /* USER CODE END Private defines */
 
+void mainF_TASK_TEST(void);
+
 #ifdef __cplusplus
  extern "C" {
 #endif

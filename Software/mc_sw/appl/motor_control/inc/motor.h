@@ -8,6 +8,7 @@
 #ifndef MOTOR_CONTROL_INC_MOTOR_H_
 #define MOTOR_CONTROL_INC_MOTOR_H_
 
+
 #define MOTOR_FORWARD_DIRECTION_K        (uint8_t)(1)
 #define MOTOR_BACKWARD_DIRECTION_K       (uint8_t)(2)
 
