@@ -16,7 +16,7 @@
 
 /***** Macros */
 #define MOTOR_TASK_MS_K                  (uint8_t)(50)
-#define MOTOR_NEW_DIR_DELAY_TIME_MS_K    (uint8_t)(100 / MOTOR_TASK_MS_K)
+#define MOTOR_NEW_DIR_DELAY_TIME_MS_K    (uint8_t)(500 / MOTOR_TASK_MS_K)
 
 /***** Variables */
 enum motor_state_et
@@ -69,6 +69,9 @@ static void motorLF_Start(uint8_t mot_id)
     /* direction plausibility check */
     if(motor_s[mot_id].current_direction != 0u)
     {
+        /* set the pwm duty cycle */
+        timer_ifF_UpdatePwm(mot_id, motor_s[mot_id].pwm_duty_cycle);
+
         if(MOTOR_FORWARD_DIRECTION_K == motor_s[mot_id].current_direction)
         {
             /* motor is in forward direction */
@@ -79,9 +82,6 @@ static void motorLF_Start(uint8_t mot_id)
             /* motor is in backward direction */
             gpio_ifF_setMotorDirection(mot_id, MOTOR_BACKWARD_DIRECTION_K);
         }
-
-        /* set the pwm duty cycle */
-        timer_ifF_UpdatePwm(mot_id, motor_s[mot_id].pwm_duty_cycle);
     }
 }
 
@@ -120,6 +120,9 @@ void motorF_StateMachine(void)
                 {
                     /* start the motor */
                     motorLF_Start(idx);
+
+                    /* assign current direction since motor is starting-up */
+                    motor_s[idx].prev_direction = motor_s[idx].current_direction;
 
                     /* move to MOTOR_RUNNING state */
                     motor_s[idx].motor_state_e = MOTOR_RUNNING;
@@ -214,3 +217,5 @@ void motorF_SetPwmAndDirection(uint8_t mot_id, int16_t pwm)
     }
     else{/* no action */}
 }
+
+// TODO: Add motor over current error checking

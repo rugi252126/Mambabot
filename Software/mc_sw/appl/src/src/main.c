@@ -45,6 +45,8 @@
 #include "ros_if.h"
 #include "gpio_if.h"
 #include "timer_if.h"
+#include "encoder.h"
+#include "motor.h"
 /* USER CODE END Includes */
 
 /* Private variables ---------------------------------------------------------*/
@@ -105,6 +107,10 @@ int main(void)
   timer_ifF_Init();
   /* USER CODE BEGIN 2 */
   ros_ifF_Init();
+
+  encoderF_Init();
+
+  motorF_Init();
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -116,10 +122,133 @@ int main(void)
 
   /* USER CODE BEGIN 3 */
 
-	  ros_ifF_Loop();
+	  //ros_ifF_Loop();
   }
   /* USER CODE END 3 */
 
+}
+
+/* FOR TESTING ONLY - it will be called every 1ms */
+void mainF_TASK_TEST(void)
+{
+    static uint16_t _50ms_ctr = 0u;
+    static uint16_t _1s_ctr = 0u;
+    static uint32_t ctr = 0u;
+
+    _50ms_ctr++;
+    if(_50ms_ctr >= 50u)
+    {
+        _50ms_ctr = 0u;
+
+        motorF_StateMachine();
+
+        ros_ifF_Loop();
+    }
+
+    _1s_ctr++;
+    if(_1s_ctr >= 1000u)
+    {
+        _1s_ctr = 0u;
+
+        ros_ifF_TestAndDebug();
+
+        ctr++;
+        if(5u == ctr)
+        {
+            motorF_SetPwmAndDirection(0, 100);
+            motorF_SetPwmAndDirection(1, 100);
+            motorF_SetPwmAndDirection(2, 100);
+            motorF_SetPwmAndDirection(3, 100);
+        }
+        else if(15u == ctr)
+        {
+            motorF_SetPwmAndDirection(0, 0);
+            motorF_SetPwmAndDirection(1, 0);
+            motorF_SetPwmAndDirection(2, 0);
+            motorF_SetPwmAndDirection(3, 0);
+        }
+        else if(20u == ctr)
+        {
+            motorF_SetPwmAndDirection(0, -100);
+            motorF_SetPwmAndDirection(1, -100);
+            motorF_SetPwmAndDirection(2, -100);
+            motorF_SetPwmAndDirection(3, -100);
+        }
+        else if(30u == ctr)
+        {
+            motorF_SetPwmAndDirection(0, 0);
+            motorF_SetPwmAndDirection(1, 0);
+            motorF_SetPwmAndDirection(2, 0);
+            motorF_SetPwmAndDirection(3, 0);
+        }
+        if(35u == ctr)
+        {
+            motorF_SetPwmAndDirection(0, 100);
+            motorF_SetPwmAndDirection(1, -100);
+            motorF_SetPwmAndDirection(2, 100);
+            motorF_SetPwmAndDirection(3, -100);
+        }
+        else if(45u == ctr)
+        {
+            motorF_SetPwmAndDirection(0, 0);
+            motorF_SetPwmAndDirection(1, 0);
+            motorF_SetPwmAndDirection(2, 0);
+            motorF_SetPwmAndDirection(3, 0);
+        }
+        if(50u == ctr)
+        {
+            motorF_SetPwmAndDirection(0, -100);
+            motorF_SetPwmAndDirection(1, 100);
+            motorF_SetPwmAndDirection(2, -100);
+            motorF_SetPwmAndDirection(3, 100);
+        }
+        else if(60u == ctr)
+        {
+            motorF_SetPwmAndDirection(0, 0);
+            motorF_SetPwmAndDirection(1, 0);
+            motorF_SetPwmAndDirection(2, 0);
+            motorF_SetPwmAndDirection(3, 0);
+        }
+        else if(65u == ctr)
+        {
+            motorF_SetPwmAndDirection(0, 100);
+            motorF_SetPwmAndDirection(1, 0);
+            motorF_SetPwmAndDirection(2, 0);
+            motorF_SetPwmAndDirection(3, 0);
+        }
+        else if(70u == ctr)
+        {
+            motorF_SetPwmAndDirection(0, 0);
+            motorF_SetPwmAndDirection(1, 100);
+            motorF_SetPwmAndDirection(2, 0);
+            motorF_SetPwmAndDirection(3, 0);
+        }
+        else if(75u == ctr)
+        {
+            motorF_SetPwmAndDirection(0, 0);
+            motorF_SetPwmAndDirection(1, 0);
+            motorF_SetPwmAndDirection(2, 100);
+            motorF_SetPwmAndDirection(3, 0);
+        }
+        else if(80u == ctr)
+        {
+            motorF_SetPwmAndDirection(0, 0);
+            motorF_SetPwmAndDirection(1, 0);
+            motorF_SetPwmAndDirection(2, 0);
+            motorF_SetPwmAndDirection(3, 100);
+        }
+        else if(85u == ctr)
+        {
+            motorF_SetPwmAndDirection(0, 0);
+            motorF_SetPwmAndDirection(1, 0);
+            motorF_SetPwmAndDirection(2, 0);
+            motorF_SetPwmAndDirection(3, 0);
+        }
+        else
+        {
+            // no action
+        }
+    }
 }
 
 /* 180Mhz system clock */

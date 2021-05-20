@@ -19,35 +19,41 @@
 /* GPIO motor control pins */
 #define MOTOR_CTRL_NUM_GPIO_PIN_K                (uint8_t)(2) /* two digital output pins per motor to control the direction */
 #define MOTOR1_DO_PIN_REG_K                      GPIOB
-#define MOTOR1_DO_PIN_1_K                        GPIO_PIN_10
-#define MOTOR1_DO_PIN_2_K                        GPIO_PIN_11
+#define MOTOR1_DO_PIN_1_K                        GPIO_PIN_11
+#define MOTOR1_DO_PIN_2_K                        GPIO_PIN_10
 #define MOTOR2_DO_PIN_REG_K                      GPIOB
-#define MOTOR2_DO_PIN_1_K                        GPIO_PIN_0
-#define MOTOR2_DO_PIN_2_K                        GPIO_PIN_1
+#define MOTOR2_DO_PIN_1_K                        GPIO_PIN_1
+#define MOTOR2_DO_PIN_2_K                        GPIO_PIN_0
+#if defined(VAR_4WD_USED)
 #define MOTOR3_DO_PIN_REG_K                      GPIOD
-#define MOTOR3_DO_PIN_1_K                        GPIO_PIN_14
-#define MOTOR3_DO_PIN_2_K                        GPIO_PIN_15
+#define MOTOR3_DO_PIN_1_K                        GPIO_PIN_15
+#define MOTOR3_DO_PIN_2_K                        GPIO_PIN_14
 #define MOTOR4_DO_PIN_REG_K                      GPIOC
 #define MOTOR4_DO_PIN_1_K                        GPIO_PIN_8
 #define MOTOR4_DO_PIN_2_K                        GPIO_PIN_9
+#endif // VAR_4WD_USED
 
 
 /* Motor Id to GPIO Register mapping */
 static GPIO_TypeDef *motorId2GpioReg[MOTOR_NUM_ID_K] =
 {
-    MOTOR1_DO_PIN_REG_K,
-    MOTOR2_DO_PIN_REG_K,
-    MOTOR3_DO_PIN_REG_K,
-    MOTOR4_DO_PIN_REG_K
+    MOTOR1_DO_PIN_REG_K
+   ,MOTOR2_DO_PIN_REG_K
+#if defined(VAR_4WD_USED)
+   ,MOTOR3_DO_PIN_REG_K
+   ,MOTOR4_DO_PIN_REG_K
+#endif // VAR_4WD_USED
 };
 
 /* Motor Id to GPIO Pin mapping */
 static const uint16_t motorId2GpioPin[MOTOR_NUM_ID_K][MOTOR_CTRL_NUM_GPIO_PIN_K] =
 {
-    {MOTOR1_DO_PIN_1_K, MOTOR1_DO_PIN_2_K},
-    {MOTOR2_DO_PIN_1_K, MOTOR2_DO_PIN_2_K},
-    {MOTOR3_DO_PIN_1_K, MOTOR3_DO_PIN_2_K},
-    {MOTOR4_DO_PIN_1_K, MOTOR4_DO_PIN_2_K}
+    {MOTOR1_DO_PIN_1_K, MOTOR1_DO_PIN_2_K}
+   ,{MOTOR2_DO_PIN_1_K, MOTOR2_DO_PIN_2_K}
+#if defined(VAR_4WD_USED)
+   ,{MOTOR3_DO_PIN_1_K, MOTOR3_DO_PIN_2_K}
+   ,{MOTOR4_DO_PIN_1_K, MOTOR4_DO_PIN_2_K}
+#endif // VAR_4WD_USED
 };
 
 
@@ -150,6 +156,7 @@ static void gpio_ifLF_InitGpioMotorDirectionControl(void)
     GPIO_motorInitStruct.Speed = GPIO_SPEED_FREQ_LOW;
     HAL_GPIO_Init(MOTOR2_DO_PIN_REG_K, &GPIO_motorInitStruct);
 
+#if defined(VAR_4WD_USED)
     /*Configure GPIO for Motor3 pin1 */
     GPIO_motorInitStruct.Pin = MOTOR3_DO_PIN_1_K;
     GPIO_motorInitStruct.Mode = GPIO_MODE_OUTPUT_PP;
@@ -177,6 +184,7 @@ static void gpio_ifLF_InitGpioMotorDirectionControl(void)
     GPIO_motorInitStruct.Pull = GPIO_NOPULL;
     GPIO_motorInitStruct.Speed = GPIO_SPEED_FREQ_LOW;
     HAL_GPIO_Init(MOTOR4_DO_PIN_REG_K, &GPIO_motorInitStruct);
+#endif // VAR_4WD_USED
 }
 
 /***** Global functions */
@@ -233,8 +241,6 @@ void gpio_ifF_setMotorDirection(uint8_t mot_id, uint8_t dir)
     @param  debug_id    {[0..n] debug port Id}
             status      {[0..1] OFF/ON       }
     @return none
-
-    It will be called once every POR.
  */
 void gpio_ifF_setDebugPort(uint8_t debug_id, uint8_t status)
 {
@@ -256,8 +262,6 @@ void gpio_ifF_setDebugPort(uint8_t debug_id, uint8_t status)
 
     @param  debug_id    {[0..n] debug port Id}
     @return none
-
-    It will be called once every POR.
  */
 void gpio_ifF_toggleDebugPort(uint8_t debug_id)
 {

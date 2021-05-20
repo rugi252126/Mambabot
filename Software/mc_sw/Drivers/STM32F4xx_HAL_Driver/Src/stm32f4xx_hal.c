@@ -327,80 +327,13 @@ __weak HAL_StatusTypeDef HAL_InitTick(uint32_t TickPriority)
   *      implementations in user file.
   * @retval None
   */
-static uint32_t pin0_tst_ctr=0u;
-static uint32_t pin0_tst_stat=0u;
-static uint32_t pin1_tst_ctr=0u;
-static uint32_t pin1_tst_stat=0u;
-static uint32_t delay_ctr=0u;
 __weak void HAL_IncTick(void)
 {
-  uwTick += uwTickFreq;
-  //HAL_GPIO_TogglePin(LD2_GPIO_Port, GPIO_PIN_0); // for TESTING ONLY
-  //HAL_GPIO_TogglePin(LD2_GPIO_Port, GPIO_PIN_1); // for TESTING ONLY
+    uwTick += uwTickFreq;
 
-  if(pin0_tst_ctr < 5u)
-  {
-	  pin0_tst_ctr++;
 
-	  if(pin0_tst_stat != 1u)
-	  {
-		  HAL_GPIO_WritePin(LD2_GPIO_Port, GPIO_PIN_0, GPIO_PIN_SET);
-	  }
-	  else
-	  {
-		  HAL_GPIO_WritePin(LD2_GPIO_Port, GPIO_PIN_0, GPIO_PIN_RESET);
-	  }
-  }
-  else
-  {
-	  pin0_tst_ctr = 0u;
-
-	  if(pin0_tst_stat != 1u)
-	  {
-		  pin0_tst_stat = 1u;
-	  }
-	  else
-	  {
-		  pin0_tst_stat = 0u;
-	  }
-  }
-
-  if(delay_ctr < 3u)
-  {
-	  delay_ctr +=1u;
-  }
-  else
-  {
-	  if(pin1_tst_ctr < 5u)
-	  {
-		  pin1_tst_ctr++;
-
-		  if(pin1_tst_stat != 1u)
-		  {
-			  HAL_GPIO_WritePin(LD2_GPIO_Port, GPIO_PIN_1, GPIO_PIN_SET);
-		  }
-		  else
-		  {
-			  HAL_GPIO_WritePin(LD2_GPIO_Port, GPIO_PIN_1, GPIO_PIN_RESET);
-		  }
-	  }
-	  else
-	  {
-		  pin1_tst_ctr = 0u;
-
-		  if(pin1_tst_stat != 1u)
-		  {
-			  pin1_tst_stat = 1u;
-		  }
-		  else
-		  {
-			  pin1_tst_stat = 0u;
-		  }
-	  }
-  }
-
-  timer_ifF_ReadEncoderCounts();
-
+    // FOR TESTING ONLY
+    mainF_TASK_TEST();
 }
 
 /**
