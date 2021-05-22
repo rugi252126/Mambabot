@@ -9,8 +9,6 @@
 #include "project.h"
 #include "timer_if.h"
 #include "encoder.h"
-//#include "motor.h"
-#include "math.h"
 
 /* Private typedef -----------------------------------------------------------*/
 #define TIM_PWM_ID_1_K                            MOTOR_ID_1_K /* for Motor1 Pwm Control     */
@@ -80,6 +78,8 @@
 /* Free running timer */
 #define TIMx_FREE_RUNNING_TIMER                   TIM7
 #define TIMx_FREE_RUNNING_TIMER_CLK_ENABLE()      __HAL_RCC_TIM7_CLK_ENABLE()
+/* Interrupt handler */
+#define TIMx_FREE_RUNNING_TIMER_IRQ_HANDLER_ID    TIM7_IRQn
 
 /* Period value is derived based on 15Khz TIMx_MOTOR_CTRL output clock */
 #define PERIOD_VALUE                             (uint32_t)(1000 - 1)    /* Period Value            */
@@ -110,11 +110,13 @@ TIM_Encoder_InitTypeDef sEncoder3Config;
 TIM_Encoder_InitTypeDef sEncoder4Config;
 #endif // VAR_4WD_USED
 
+/***** External functions */
+extern void _Error_Handler(char *, int);
+
 /***** Local function prototypes */
 static void timer_ifLF_InitFreeRunningTimer(void);
 static void timer_ifLF_InitPwm(void);
 static void timer_ifLF_InitEncoder(void);
-static void timer_ifLF_ErrorHandler(void);
 
 /***** Local functions */
 
@@ -149,14 +151,14 @@ static void timer_ifLF_InitFreeRunningTimer(void)
     if (HAL_TIM_Base_Init(&TimFreeRunningHandle) != HAL_OK)
     {
         /* Initialization Error */
-        timer_ifLF_ErrorHandler();
+        _Error_Handler(__FILE__, __LINE__);
     }
 
     /* Start timer with interrupt capability */
     if (HAL_TIM_Base_Start_IT(&TimFreeRunningHandle) != HAL_OK)
     {
         /* Initialization Error */
-        timer_ifLF_ErrorHandler();
+        _Error_Handler(__FILE__, __LINE__);
     }
 }
 
@@ -201,7 +203,7 @@ static void timer_ifLF_InitPwm(void)
     if (HAL_TIM_PWM_Init(&TimMotorHandle) != HAL_OK)
     {
         /* Initialization Error */
-        timer_ifLF_ErrorHandler();
+        _Error_Handler(__FILE__, __LINE__);
     }
 
     /*##-2- Configure the PWM channels #########################################*/
@@ -268,7 +270,7 @@ static void timer_ifLF_InitEncoder(void)
     if(HAL_TIM_Encoder_Init(&Encoder1_Handle, &sEncoder1Config) != HAL_OK)
     {
         /* Initialization Error */
-    	timer_ifLF_ErrorHandler();
+        _Error_Handler(__FILE__, __LINE__);
     }
 
     /* -1- Initialize TIMx_MOTOR2_ENCODER to handle the encoder sensor */
@@ -302,7 +304,7 @@ static void timer_ifLF_InitEncoder(void)
     if(HAL_TIM_Encoder_Init(&Encoder2_Handle, &sEncoder2Config) != HAL_OK)
     {
         /* Initialization Error */
-    	timer_ifLF_ErrorHandler();
+        _Error_Handler(__FILE__, __LINE__);
     }
 
 #if defined(VAR_4WD_USED)
@@ -337,7 +339,7 @@ static void timer_ifLF_InitEncoder(void)
     if(HAL_TIM_Encoder_Init(&Encoder3_Handle, &sEncoder3Config) != HAL_OK)
     {
         /* Initialization Error */
-    	timer_ifLF_ErrorHandler();
+        _Error_Handler(__FILE__, __LINE__);
     }
 
     /* -1- Initialize TIMx_MOTOR4_ENCODER to handle the encoder sensor */
@@ -371,7 +373,7 @@ static void timer_ifLF_InitEncoder(void)
     if(HAL_TIM_Encoder_Init(&Encoder4_Handle, &sEncoder4Config) != HAL_OK)
     {
         /* Initialization Error */
-    	timer_ifLF_ErrorHandler();
+        _Error_Handler(__FILE__, __LINE__);
     }
 #endif // VAR_4WD_USED
 
@@ -382,17 +384,6 @@ static void timer_ifLF_InitEncoder(void)
     HAL_TIM_Encoder_Start(&Encoder3_Handle, TIM_CHANNEL_ALL);
     HAL_TIM_Encoder_Start(&Encoder4_Handle, TIM_CHANNEL_ALL);
 #endif // VAR_4WD_USED
-}
-
-/** Error handler function
-
-    @param  none
-    @return none
- */
-static void timer_ifLF_ErrorHandler(void)
-{
-	// TODO: Save the cause of error
-    while(1);
 }
 
 /***** Global functions */
@@ -429,7 +420,7 @@ void timer_ifF_ConfigPwmChannel(uint8_t idx)
             if (HAL_TIM_PWM_ConfigChannel(&TimMotorHandle, &sMotorConfig, TIM_CHANNEL_1) != HAL_OK)
             {
                 /* Configuration Error */
-                timer_ifLF_ErrorHandler();
+                _Error_Handler(__FILE__, __LINE__);
             }
             break;
         }
@@ -441,7 +432,7 @@ void timer_ifF_ConfigPwmChannel(uint8_t idx)
             if (HAL_TIM_PWM_ConfigChannel(&TimMotorHandle, &sMotorConfig, TIM_CHANNEL_2) != HAL_OK)
             {
                 /* Configuration Error */
-                timer_ifLF_ErrorHandler();
+                _Error_Handler(__FILE__, __LINE__);
             }
             break;
         }
@@ -453,7 +444,7 @@ void timer_ifF_ConfigPwmChannel(uint8_t idx)
             if (HAL_TIM_PWM_ConfigChannel(&TimMotorHandle, &sMotorConfig, TIM_CHANNEL_3) != HAL_OK)
             {
                 /* Configuration Error */
-                timer_ifLF_ErrorHandler();
+                _Error_Handler(__FILE__, __LINE__);
             }
             break;
         }
@@ -465,7 +456,7 @@ void timer_ifF_ConfigPwmChannel(uint8_t idx)
             if (HAL_TIM_PWM_ConfigChannel(&TimMotorHandle, &sMotorConfig, TIM_CHANNEL_4) != HAL_OK)
             {
                 /* Configuration Error */
-                timer_ifLF_ErrorHandler();
+                _Error_Handler(__FILE__, __LINE__);
             }
             break;
         }
@@ -491,7 +482,7 @@ void timer_ifF_StartPwm(uint8_t idx)
             if (HAL_TIM_PWM_Start(&TimMotorHandle, TIM_CHANNEL_1) != HAL_OK)
             {
                 /* Configuration Error */
-                timer_ifLF_ErrorHandler();
+                _Error_Handler(__FILE__, __LINE__);
             }
             break;
         }
@@ -502,7 +493,7 @@ void timer_ifF_StartPwm(uint8_t idx)
             if (HAL_TIM_PWM_Start(&TimMotorHandle, TIM_CHANNEL_2) != HAL_OK)
             {
                 /* Configuration Error */
-                timer_ifLF_ErrorHandler();
+                _Error_Handler(__FILE__, __LINE__);
             }
             break;
         }
@@ -513,7 +504,7 @@ void timer_ifF_StartPwm(uint8_t idx)
             if (HAL_TIM_PWM_Start(&TimMotorHandle, TIM_CHANNEL_3) != HAL_OK)
             {
                 /* Configuration Error */
-                timer_ifLF_ErrorHandler();
+                _Error_Handler(__FILE__, __LINE__);
             }
             break;
         }
@@ -524,7 +515,7 @@ void timer_ifF_StartPwm(uint8_t idx)
             if (HAL_TIM_PWM_Start(&TimMotorHandle, TIM_CHANNEL_4) != HAL_OK)
             {
                 /* Configuration Error */
-                timer_ifLF_ErrorHandler();
+                _Error_Handler(__FILE__, __LINE__);
             }
             break;
         }
@@ -550,7 +541,7 @@ void timer_ifF_StopPwm(uint8_t idx)
             if (HAL_TIM_PWM_Stop(&TimMotorHandle, TIM_CHANNEL_1) != HAL_OK)
             {
                 /* Configuration Error */
-                timer_ifLF_ErrorHandler();
+                _Error_Handler(__FILE__, __LINE__);
             }
             break;
         }
@@ -561,7 +552,7 @@ void timer_ifF_StopPwm(uint8_t idx)
             if (HAL_TIM_PWM_Stop(&TimMotorHandle, TIM_CHANNEL_2) != HAL_OK)
             {
                 /* Configuration Error */
-                timer_ifLF_ErrorHandler();
+                _Error_Handler(__FILE__, __LINE__);
             }
             break;
         }
@@ -572,7 +563,7 @@ void timer_ifF_StopPwm(uint8_t idx)
             if (HAL_TIM_PWM_Stop(&TimMotorHandle, TIM_CHANNEL_3) != HAL_OK)
             {
                 /* Configuration Error */
-                timer_ifLF_ErrorHandler();
+                _Error_Handler(__FILE__, __LINE__);
             }
             break;
         }
@@ -583,7 +574,7 @@ void timer_ifF_StopPwm(uint8_t idx)
             if (HAL_TIM_PWM_Stop(&TimMotorHandle, TIM_CHANNEL_4) != HAL_OK)
             {
                 /* Configuration Error */
-                timer_ifLF_ErrorHandler();
+                _Error_Handler(__FILE__, __LINE__);
             }
             break;
         }
@@ -770,7 +761,7 @@ void HAL_TIM_PWM_MspInit(TIM_HandleTypeDef *htim)
     TIMx_MOTOR_CTRL_CLK_ENABLE();
 
     /* Enable all GPIO Channels Clock requested */
-    /* GPIO clock is initialized in function "mainLF_InitGpioClock" */
+    /* GPIO clock is initialized in function "gpio_ifLF_InitGpioClock" */
 
     /* Configure (TIM1_Channel1), (TIM1_Channel2), (TIM1_Channel3),
      (TIM1_Channel4) in output, push-pull, alternate function mode
@@ -829,7 +820,7 @@ void HAL_TIM_Encoder_MspInit(TIM_HandleTypeDef *htim)
 #endif // VAR_4WD_USED
 
     /* Enable GPIO Channels Clock */
-    /* GPIO clock is initialized in function "mainLF_InitGpioClock" */
+    /* GPIO clock is initialized in function "gpio_ifLF_InitGpioClock" */
 
     /*##-2- Configure I/Os #####################################################*/
 
@@ -907,6 +898,6 @@ void HAL_TIM_Base_MspInit(TIM_HandleTypeDef *htim)
     /* This is not needed as this is just a free running timer */
 
     /* 3. Interrupt init */
-    HAL_NVIC_SetPriority(TIM7_IRQn, 0, 0);
-    HAL_NVIC_EnableIRQ(TIM7_IRQn);
+    HAL_NVIC_SetPriority(TIMx_FREE_RUNNING_TIMER_IRQ_HANDLER_ID, 0, 0);
+    HAL_NVIC_EnableIRQ(TIMx_FREE_RUNNING_TIMER_IRQ_HANDLER_ID);
 }

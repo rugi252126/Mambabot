@@ -32,7 +32,7 @@ defined in linker script */
  * @brief  This is the code that gets called when the processor first
  *          starts execution following a reset event. Only the absolutely
  *          necessary set is performed, after which the application
- *          supplied main() routine is called.
+ *          supplied startupF_Init() routine is called.
  * @param  None
  * @retval : None
 */
@@ -80,7 +80,7 @@ LoopFillZerobss:
 /* Call static constructors */
   bl __libc_init_array
 /* Call the application's entry point.*/
-  bl main
+  bl startupF_Init
 
 LoopForever:
     b LoopForever
