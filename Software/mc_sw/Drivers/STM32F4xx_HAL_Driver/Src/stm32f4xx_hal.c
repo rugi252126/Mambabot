@@ -50,8 +50,6 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f4xx_hal.h"
-#include "FreeRTOSConfig.h" // added by alfonsor
-#include "timer_if.h" // added by alfonsor
 
 /** @addtogroup STM32F4xx_HAL_Driver
   * @{
@@ -330,10 +328,6 @@ __weak HAL_StatusTypeDef HAL_InitTick(uint32_t TickPriority)
 __weak void HAL_IncTick(void)
 {
     uwTick += uwTickFreq;
-
-
-    // FOR TESTING ONLY
-    mainF_TASK_TEST();
 }
 
 /**

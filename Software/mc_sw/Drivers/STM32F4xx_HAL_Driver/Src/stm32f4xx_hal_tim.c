@@ -264,7 +264,6 @@ HAL_StatusTypeDef HAL_TIM_Base_DeInit(TIM_HandleTypeDef *htim)
   return HAL_OK;
 }
 
-#if 0 // removed by alfonsor
 /**
   * @brief  Initializes the TIM Base MSP.
   * @param  htim pointer to a TIM_HandleTypeDef structure that contains
@@ -279,7 +278,6 @@ __weak void HAL_TIM_Base_MspInit(TIM_HandleTypeDef *htim)
             the HAL_TIM_Base_MspInit could be implemented in the user file
    */
 }
-#endif
 
 /**
   * @brief  DeInitializes TIM Base MSP.
@@ -1066,14 +1064,14 @@ HAL_StatusTypeDef HAL_TIM_PWM_DeInit(TIM_HandleTypeDef *htim)
   *                the configuration information for TIM module.
   * @retval None
   */
-// removed @alfonsor __weak void HAL_TIM_PWM_MspInit(TIM_HandleTypeDef *htim)
-//{
+__weak void HAL_TIM_PWM_MspInit(TIM_HandleTypeDef *htim)
+{
   /* Prevent unused argument(s) compilation warning */
-//  UNUSED(htim);
+  UNUSED(htim);
   /* NOTE : This function Should not be modified, when the callback is needed,
             the HAL_TIM_PWM_MspInit could be implemented in the user file
    */
-//}
+}
 
 /**
   * @brief  DeInitializes TIM PWM MSP.
@@ -2401,14 +2399,14 @@ HAL_StatusTypeDef HAL_TIM_Encoder_DeInit(TIM_HandleTypeDef *htim)
   *                the configuration information for TIM module.
   * @retval None
   */
-// removed @alfonsor __weak void HAL_TIM_Encoder_MspInit(TIM_HandleTypeDef *htim)
-//{
+__weak void HAL_TIM_Encoder_MspInit(TIM_HandleTypeDef *htim)
+{
   /* Prevent unused argument(s) compilation warning */
-//  UNUSED(htim);
+  UNUSED(htim);
   /* NOTE : This function Should not be modified, when the callback is needed,
             the HAL_TIM_Encoder_MspInit could be implemented in the user file
    */
-//}
+}
 
 /**
   * @brief  DeInitializes TIM Encoder Interface MSP.

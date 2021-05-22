@@ -31,7 +31,6 @@
 /* Scheduler includes. */
 #include "FreeRTOS.h"
 #include "task.h"
-#include "stm32f4xx_hal.h" // alfonsor -> added here for freeRTOS integration
 
 #ifndef __VFP_FP__
     #error This port can only be used when the project options are configured to enable hardware floating point support.
@@ -500,7 +499,6 @@ void xPortSysTickHandler( void )
      * known. */
     portDISABLE_INTERRUPTS();
 
-    HAL_IncTick(); // alfonsor -> added here for freeRTOS integration
     {
         /* Increment the RTOS tick. */
         if( xTaskIncrementTick() != pdFALSE )

@@ -41,18 +41,13 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f4xx_hal.h"
-#include "main.h"
 /* Exported types ------------------------------------------------------------*/
 /* Exported constants --------------------------------------------------------*/
 /* Exported macro ------------------------------------------------------------*/
 /* Exported functions ------------------------------------------------------- */
 
 // alfonsor (removed) -> void SysTick_Handler(void);
-#if 0
-void USART2_IRQHandler(void);
-#else
 void USART3_IRQHandler(void);
-#endif
 
 #ifdef __cplusplus
 }

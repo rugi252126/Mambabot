@@ -16,6 +16,8 @@
 
 /* comment-out if debug port is not used */
 #define DEBUG_PORT_USED
+/* comment-out if debug over ROS is not used */
+#define DEBUG_OVER_ROS_USED
 
 /* motor PPR */
 #define MOTOR_ENCODER_COUNTS_PER_REVOLUTION_K   (int32_t)10500

@@ -1,13 +1,10 @@
 #ifndef _STM32_HARDWARE_H_
 #define _STM32_HARDWARE_H_
 
-#include "main.h"
 #include "stm32f4xx_hal.h"
-
 #include "ringbuffer.h"
 
 
-//extern UART_HandleTypeDef huart2;
 extern UART_HandleTypeDef huart3;
 extern struct ringbuffer rb;
 
