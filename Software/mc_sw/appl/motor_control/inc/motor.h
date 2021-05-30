@@ -30,6 +30,9 @@ void motorF_Init(void);
  */
 void motorF_StateMachine(void);
 
+#ifdef __cplusplus
+extern "C"{
+#endif
 /** Interface function to set the required motor pwm and direction
 
     @param  mot_id   {[0..MOTOR_NUM_ID_K] motor ID}
@@ -37,6 +40,8 @@ void motorF_StateMachine(void);
     @return none
  */
 void motorF_SetPwmAndDirection(uint8_t mot_id, int16_t pwm);
-
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* MOTOR_CONTROL_INC_MOTOR_H_ */

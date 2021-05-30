@@ -5,7 +5,4 @@
         <param name="baud" value="57600" />
     </node>
 
-    <!-- Publish test -->
-    <node pkg="ros_test" name="talker" type="talker" output="screen"></node>
-
 </launch>

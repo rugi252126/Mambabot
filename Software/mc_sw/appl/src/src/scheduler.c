@@ -38,45 +38,6 @@ static void schedulerLF_vTask1s_handler(void *params);
 
 /***** Local functions */
 
-static void TASK_TEST(void)
-{
-    static uint32_t ctr = 0u;
-
-    ctr++;
-    if(5u == ctr)
-    {
-        motorF_SetPwmAndDirection(0, 100);
-        motorF_SetPwmAndDirection(1, 100);
-        motorF_SetPwmAndDirection(2, 100);
-        motorF_SetPwmAndDirection(3, 100);
-    }
-    else if(15u == ctr)
-    {
-        motorF_SetPwmAndDirection(0, 0);
-        motorF_SetPwmAndDirection(1, 0);
-        motorF_SetPwmAndDirection(2, 0);
-        motorF_SetPwmAndDirection(3, 0);
-    }
-    else if(20u == ctr)
-    {
-        motorF_SetPwmAndDirection(0, -100);
-        motorF_SetPwmAndDirection(1, -100);
-        motorF_SetPwmAndDirection(2, -100);
-        motorF_SetPwmAndDirection(3, -100);
-    }
-    else if(30u == ctr)
-    {
-        motorF_SetPwmAndDirection(0, 0);
-        motorF_SetPwmAndDirection(1, 0);
-        motorF_SetPwmAndDirection(2, 0);
-        motorF_SetPwmAndDirection(3, 0);
-    }
-    else
-    {
-
-    }
-}
-
 /** 50ms Task handler/implementation
 
     @param  params { pointer parameter }
@@ -142,7 +103,6 @@ static void schedulerLF_vTask1s_handler(void *params)
 #endif // DEBUG_OVER_ROS_USED
 
         /* set motor request and direction */
-        TASK_TEST(); //motorF_SetPwmAndDirection(0,0);
 
         /* convert ms to tick and send to vTaskDelay */
         vTaskDelay(pdMS_TO_TICKS(SCHEDULER_1S_TASK_DELAY_K));
