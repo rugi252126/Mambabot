@@ -22,7 +22,7 @@
 enum motor_state_et
 {
     MOTOR_STOP_E,
-    MOTOR_RUNNING,
+    MOTOR_RUNNING_E,
     MOTOR_STOP_OVER_E
 };
 
@@ -124,13 +124,13 @@ void motorF_StateMachine(void)
                     /* assign current direction since motor is starting-up */
                     motor_s[idx].prev_direction = motor_s[idx].current_direction;
 
-                    /* move to MOTOR_RUNNING state */
-                    motor_s[idx].motor_state_e = MOTOR_RUNNING;
+                    /* move to MOTOR_RUNNING_E state */
+                    motor_s[idx].motor_state_e = MOTOR_RUNNING_E;
                 }
                 else{/* no action */}
                 break;
             }
-            case MOTOR_RUNNING:
+            case MOTOR_RUNNING_E:
             {
                 if(0u == motor_s[idx].pwm_duty_cycle)
                 {
@@ -173,8 +173,8 @@ void motorF_StateMachine(void)
                         /* start the motor */
                         motorLF_Start(idx);
 
-                        /* move to MOTOR_RUNNING state */
-                        motor_s[idx].motor_state_e = MOTOR_RUNNING;
+                        /* move to MOTOR_RUNNING_E state */
+                        motor_s[idx].motor_state_e = MOTOR_RUNNING_E;
                     }
                     else
                     {
