@@ -1,0 +1,5 @@
+
+string voltage_error
+string temperature_error
+string motor_current_error
+string det_error
